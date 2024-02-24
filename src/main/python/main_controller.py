@@ -1,3 +1,4 @@
+import os
 from data_processor import DataProcessor
 from model_trainer import ModelTrainer
 from results_processor import ResultsProcessor
@@ -42,7 +43,9 @@ class MainController:
         """
 
         # Setting up a directory to store the results of the training process, including a timestamp
-        results_directory, timestamp = self.results_processor.setup_result_folders(self.data_directory)
+        results_directory, timestamp = self.results_processor.setup_result_folders(
+            os.path.join(self.data_directory, "NASA dataset")
+        )
 
         # Preprocessing the data and splitting it into training and testing sets
         preprocessing_pipeline, X_train, y_train, X_test, y_test = self.data_processor.preprocess_data()

@@ -1,9 +1,10 @@
-from main_controller import MainController
+import os
 from grid_params import load_estimators_data
+from main_controller import MainController
 
 if __name__ == '__main__':
     # Defining the directory where the battery data is stored
-    data_directory = 'C:\\Users\\stepa\\PycharmProjects\\battery_state_prediction\\data'
+    data_directory = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'data')
 
     # Loading the configuration or parameters for various estimators (machine learning models)
     estimators_data_retriever = lambda input_shape: load_estimators_data(input_shape)

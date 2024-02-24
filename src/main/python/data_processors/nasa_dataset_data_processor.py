@@ -1,4 +1,6 @@
 import os
+from typing import Tuple
+
 import pandas as pd
 import scipy.io
 from sklearn.model_selection import train_test_split
@@ -7,11 +9,12 @@ from sklearn.preprocessing import FunctionTransformer
 from functools import lru_cache
 import numpy as np
 
+from src.main.python.data_processors.data_processor import DataProcessor
 
-class DataProcessor:
+
+class NasaDatasetDataProcessor(DataProcessor):
     """
-    The DataProcessor class is responsible for handling the preprocessing of battery data.
-    It includes methods to read, parse, and preprocess the data, preparing it for model training.
+    The NASA dataset implementation
     """
 
     def __init__(self, data_directory):
@@ -23,14 +26,14 @@ class DataProcessor:
         """
         self.data_directory = data_directory
 
-    def preprocess_data(self):
+    def preprocess_data(self) -> Tuple[Pipeline, pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
         """
         Preprocesses the data by splitting it into training and testing sets and applying a preprocessing pipeline.
 
         :return: The preprocessing pipeline and the split training and testing data (X_train, y_train, X_test, y_test).
         :rtype: tuple
         """
-        battery_filenames = self.list_battery_files(self.data_directory)
+        battery_filenames = self.__list_battery_files(self.data_directory)
 
         # Split battery data filenames into training and testing sets
         train, test = train_test_split(battery_filenames, test_size=0.2, random_state=42)
@@ -38,7 +41,7 @@ class DataProcessor:
         # Define and fit preprocessing pipeline on training data
         preprocessing_pipeline = Pipeline([
             ('read_and_parse_files', FunctionTransformer(func=self.read_and_parse_multiple_files)),
-            ('prefit_preprocessing', FunctionTransformer(func=self.preprocess_data_before_fitting))
+            ('prefit_preprocessing', FunctionTransformer(func=self.__preprocess_data_before_fitting))
         ])
 
         # Apply the pipeline to both training and test data
@@ -48,7 +51,7 @@ class DataProcessor:
         return preprocessing_pipeline, X_train, y_train, X_test, y_test
 
     @staticmethod
-    def list_battery_files(root):
+    def __list_battery_files(root):
         """
         Lists all battery data files (.mat files) in the given directory.
 
@@ -67,7 +70,7 @@ class DataProcessor:
     # Parses battery data into a DataFrame
     @staticmethod
     @lru_cache
-    def parse_battery_data(file):
+    def __parse_battery_data(file):
         """
         Parses an individual battery data file into a structured DataFrame.
 
@@ -78,7 +81,7 @@ class DataProcessor:
         """
 
         # Parses individual battery data file into a structured DataFrame
-        battery_df = pd.DataFrame(DataProcessor.read_battery_data(file))
+        battery_df = pd.DataFrame(NasaDatasetDataProcessor.__read_battery_data(file))
         battery_df['battery_filename'] = file
 
         # Extracting nested data from the battery DataFrame
@@ -103,11 +106,11 @@ class DataProcessor:
         :return: A DataFrame containing combined data from all files.
         :rtype: pd.DataFrame
         """
-        battery_dfs = [DataProcessor.parse_battery_data(file) for file in files]
+        battery_dfs = [NasaDatasetDataProcessor.__parse_battery_data(file) for file in files]
         return pd.concat(battery_dfs, ignore_index=True)
 
     @staticmethod
-    def read_battery_data(file):
+    def __read_battery_data(file):
         """
         Reads battery data from a .mat file and returns it as a dictionary.
 
@@ -122,7 +125,7 @@ class DataProcessor:
 
     # Preprocesses the data before fitting the models
     @staticmethod
-    def preprocess_data_before_fitting(df):
+    def __preprocess_data_before_fitting(df):
         """
         Preprocesses the raw DataFrame before fitting models by generating statistical features.
 
@@ -134,7 +137,7 @@ class DataProcessor:
 
         for column_name in ['Voltage_measured', 'Current_measured', 'Temperature_measured', 'Current_load',
                             'Voltage_load']:
-            DataProcessor.describe_nested_data(df, column_name)
+            NasaDatasetDataProcessor.__describe_nested_data(df, column_name)
 
         df['Time_max'] = df['Time'].apply(np.max)
         df = df.drop(['Time', 'time'], axis=1).round(5)
@@ -147,7 +150,7 @@ class DataProcessor:
         return X, y
 
     @staticmethod
-    def describe_nested_data(df, column_name):
+    def __describe_nested_data(df, column_name):
         """
         Helper method for preprocessing: computes statistical metrics for a given column in the DataFrame.
 

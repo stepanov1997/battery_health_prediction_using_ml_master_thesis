@@ -1,21 +1,22 @@
+import json
 import os
 import re
+from datetime import datetime
+from functools import lru_cache
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
-import scipy.io
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
-from functools import lru_cache
-import numpy as np
 
 from src.main.python.data_processors.data_processor import DataProcessor
 
 
-class PanasonicDatasetDataProcessor(DataProcessor):
+class ToyotaDatasetDataProcessor(DataProcessor):
     """
-    The Panasonic dataset implementation
+    The Toyota dataset implementation
     """
 
     def __init__(self, data_directory):
@@ -65,7 +66,7 @@ class PanasonicDatasetDataProcessor(DataProcessor):
             f'{root}\\{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
-            if re.match(r'\d{2}-\d{2}-\d{2}_\d{2}\.\d{2} \d+_.*\.mat', filename)
+            if re.match(r'^FastCharge_\d{6}_CH\d{1,2}_structure\.json$', filename)
         ])
 
     # Parses battery data into a DataFrame
@@ -82,18 +83,29 @@ class PanasonicDatasetDataProcessor(DataProcessor):
         """
 
         # Parses individual battery data file into a structured DataFrame
-        data = PanasonicDatasetDataProcessor.__read_battery_data(file)
-        battery_series = pd.Series(data)
-        battery_series['battery_filename'] = file
+        data = ToyotaDatasetDataProcessor.__read_battery_data(file)
 
-        # Combining and cleaning data
-        for column_name in ['Voltage', 'Current', 'Wh', 'Power', 'Battery_Temp_degC', 'Time',
-                            'Chamber_Temp_degC']:
-            PanasonicDatasetDataProcessor.__describe_nested_data(battery_series, column_name)
+        battery_data = data['summary']
+        battery_data_final = {}
+        for index in battery_data.index.values:
+            battery_data_final[index] = battery_data_final.get(index, {})
+            index_data = battery_data.loc[index]
+            for cycle_index in battery_data['cycle_index']:
+                battery_data_final[index][cycle_index] = index_data[cycle_index] \
+                    if isinstance(index_data, list) \
+                    else index_data
 
-        battery_series['Ah'] = np.median(battery_series['Ah'])
+        battery_data_final = pd.DataFrame(battery_data_final)
 
-        return battery_series.drop(['TimeStamp'])
+        battery_data_final['timestamp'] = battery_data_final['date_time_iso'].apply(
+            lambda x: datetime.fromisoformat(x).timestamp()
+        )
+
+        battery_data_final = battery_data_final.drop('cycle_index', axis=1) \
+            .drop('date_time_iso', axis=1) \
+            .dropna(axis=1, how='all')
+
+        return battery_data_final
 
     @staticmethod
     def read_and_parse_multiple_files(files):
@@ -105,8 +117,8 @@ class PanasonicDatasetDataProcessor(DataProcessor):
         :return: A DataFrame containing combined data from all files.
         :rtype: pd.DataFrame
         """
-        battery_dfs = [PanasonicDatasetDataProcessor.__parse_battery_data(file) for file in files]
-        return pd.concat(battery_dfs, axis=1).transpose()
+        battery_dfs = [ToyotaDatasetDataProcessor.__parse_battery_data(file) for file in files]
+        return pd.concat(battery_dfs).reset_index()
 
     @staticmethod
     def __read_battery_data(file):
@@ -118,8 +130,10 @@ class PanasonicDatasetDataProcessor(DataProcessor):
         :return: A dictionary containing the battery data.
         :rtype: dict
         """
-        battery_data = scipy.io.loadmat(file, simplify_cells=True)
-        return battery_data['meas']
+        with open(file, 'r') as f:
+            battery_data = pd.DataFrame(json.loads(f.read()))
+        return battery_data
+
 
     # Preprocesses the data before fitting the models
     @staticmethod

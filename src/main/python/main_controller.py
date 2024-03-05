@@ -6,9 +6,11 @@ from data_processors.panasonic_dataset_data_processor import PanasonicDatasetDat
 from model_trainer import ModelTrainer
 from results_processor import ResultsProcessor
 from serialization_util import SerializationUtil
+from src.main.python.data_processors.toyota_dataset_data_processor import ToyotaDatasetDataProcessor
 
 NASA_DATASET_DIR = "NASA dataset"
 PANASONIC_DATASET_DIR = "Panasonic 18650PF Data"
+TOYOTA_DATASET_DIR = "Toyota"
 
 
 class MainController:
@@ -40,7 +42,8 @@ class MainController:
         self.results_processor = ResultsProcessor()
         self.data_processors: Dict[str, DataProcessor] = {
             # NASA_DATASET_DIR: NasaDatasetDataProcessor(os.path.join(data_directory, NASA_DATASET_DIR)),
-            PANASONIC_DATASET_DIR: PanasonicDatasetDataProcessor(os.path.join(data_directory, PANASONIC_DATASET_DIR))
+            # PANASONIC_DATASET_DIR: PanasonicDatasetDataProcessor(os.path.join(data_directory, PANASONIC_DATASET_DIR)),
+            TOYOTA_DATASET_DIR: ToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR))
         }
         self.serialization_util = SerializationUtil()
         self.model_trainer = ModelTrainer(self.serialization_util, estimators_data_retriever)

@@ -35,7 +35,7 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         :return: The preprocessing pipeline and the split training and testing data (X_train, y_train, X_test, y_test).
         :rtype: tuple
         """
-        battery_filenames = self.__list_battery_files(self.data_directory)
+        battery_filenames = self.__list_battery_files(self.data_directory)[:5]
 
         # Split battery data filenames into training and testing sets
         train, test = train_test_split(battery_filenames, test_size=0.2, random_state=42)
@@ -134,7 +134,6 @@ class ToyotaDatasetDataProcessor(DataProcessor):
             battery_data = pd.DataFrame(json.loads(f.read()))
         return battery_data
 
-
     # Preprocesses the data before fitting the models
     @staticmethod
     def __preprocess_data_before_fitting(df):
@@ -148,9 +147,12 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         """
 
         # Preparing the target variable 'y' and feature set 'X'
-        y = pd.to_numeric(df['Ah'] / 2.9, errors='coerce').apply(lambda health: 1 if health >= 1 else health)
-        X = df.drop(['Ah'], axis=1).drop(y[y.isna()].index).dropna()
-        y = y.drop(y[y.isna()].index)
+        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce').apply(
+            lambda health: 1 if health >= 1 else health)
+        X = df.drop(['discharge_capacity'], axis=0).drop(y[y.isna()].index)
+        y = y.drop(y[y.isna()].index).dropna()
+
+        X['battery_filename'] = X['index']
 
         return X, y
 

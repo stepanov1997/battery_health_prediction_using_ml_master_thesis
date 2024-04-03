@@ -35,7 +35,7 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         :return: The preprocessing pipeline and the split training and testing data (X_train, y_train, X_test, y_test).
         :rtype: tuple
         """
-        battery_filenames = self.__list_battery_files(self.data_directory)[:5]
+        battery_filenames = self.__list_battery_files(self.data_directory)[:20]
 
         # Split battery data filenames into training and testing sets
         train, test = train_test_split(battery_filenames, test_size=0.2, random_state=42)
@@ -83,10 +83,12 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         """
 
         # Parses individual battery data file into a structured DataFrame
-        data = ToyotaDatasetDataProcessor.__read_battery_data(file)
+        filename, data = ToyotaDatasetDataProcessor.__read_battery_data(file)
 
         battery_data = data['summary']
-        battery_data_final = {}
+        battery_data_final = {
+            'battery_filename': filename
+        }
         for index in battery_data.index.values:
             battery_data_final[index] = battery_data_final.get(index, {})
             index_data = battery_data.loc[index]
@@ -132,7 +134,7 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         """
         with open(file, 'r') as f:
             battery_data = pd.DataFrame(json.loads(f.read()))
-        return battery_data
+        return file, battery_data
 
     # Preprocesses the data before fitting the models
     @staticmethod
@@ -145,14 +147,12 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         :return: Processed feature set X and target variable y.
         :rtype: tuple
         """
+        df = df.dropna(axis=0)
 
         # Preparing the target variable 'y' and feature set 'X'
-        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce').apply(
-            lambda health: 1 if health >= 1 else health)
-        X = df.drop(['discharge_capacity'], axis=0).drop(y[y.isna()].index)
-        y = y.drop(y[y.isna()].index).dropna()
-
-        X['battery_filename'] = X['index']
+        X = df.drop(['discharge_capacity'], axis=1)
+        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce')\
+              .apply(lambda health: 1 if health >= 1 else health)
 
         return X, y
 

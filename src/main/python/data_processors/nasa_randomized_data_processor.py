@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from abc import ABC
 from datetime import datetime
 from functools import lru_cache
 from typing import Tuple
@@ -14,9 +15,9 @@ from sklearn.preprocessing import FunctionTransformer
 from src.main.python.data_processors.data_processor import DataProcessor
 
 
-class ToyotaDatasetDataProcessor(DataProcessor):
+class NasaRandomizedDataProcessor(DataProcessor, ABC):
     """
-    The Toyota dataset implementation
+    The NASA randomized dataset implementation
     """
 
     def __init__(self, data_directory):
@@ -30,11 +31,11 @@ class ToyotaDatasetDataProcessor(DataProcessor):
 
     def preprocess_data(self) -> Tuple[Pipeline, pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
         """
-        Preprocesses the data by splitting it into training and testing sets and applying a preprocessing pipeline.
+            Preprocesses the data by splitting it into training and testing sets and applying a preprocessing pipeline.
 
-        :return: The preprocessing pipeline and the split training and testing data (X_train, y_train, X_test, y_test).
-        :rtype: tuple
-        """
+            :return: The preprocessing pipeline and the split training and testing data (X_train, y_train, X_test, y_test).
+            :rtype: tuple
+            """
         battery_filenames = self.__list_battery_files(self.data_directory)
 
         # Split battery data filenames into training and testing sets
@@ -66,7 +67,7 @@ class ToyotaDatasetDataProcessor(DataProcessor):
             f'{root}\\{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
-            if re.match(r'^FastCharge_\d{6}_CH\d{1,2}_structure\.json$', filename)
+            if re.match(r'^battery\d{2}\.csv$', filename)
         ])
 
     # Parses battery data into a DataFrame
@@ -83,7 +84,7 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         """
 
         # Parses individual battery data file into a structured DataFrame
-        filename, data = ToyotaDatasetDataProcessor.__read_battery_data(file)
+        filename, data = NasaRandomizedDataProcessor.__read_battery_data(file)
 
         battery_data = data['summary']
         battery_data_final = {
@@ -119,21 +120,20 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         :return: A DataFrame containing combined data from all files.
         :rtype: pd.DataFrame
         """
-        battery_dfs = [ToyotaDatasetDataProcessor.__parse_battery_data(file) for file in files]
+        battery_dfs = [NasaRandomizedDataProcessor.__parse_battery_data(file) for file in files]
         return pd.concat(battery_dfs).reset_index()
 
     @staticmethod
     def __read_battery_data(file):
         """
-        Reads battery data from a .mat file and returns it as a dictionary.
+        Reads battery data from a .csv file and returns it as a dictionary.
 
         :param file: The path of the .mat file to read.
         :type file: str
         :return: A dictionary containing the battery data.
         :rtype: dict
         """
-        with open(file, 'r') as f:
-            battery_data = pd.DataFrame(json.loads(f.read()))
+        battery_data = pd.read_csv(file)
         return file, battery_data
 
     # Preprocesses the data before fitting the models
@@ -151,8 +151,8 @@ class ToyotaDatasetDataProcessor(DataProcessor):
 
         # Preparing the target variable 'y' and feature set 'X'
         X = df.drop(['discharge_capacity'], axis=1)
-        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce')\
-              .apply(lambda health: 1 if health >= 1 else health)
+        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce') \
+            .apply(lambda health: 1 if health >= 1 else health)
 
         return X, y
 

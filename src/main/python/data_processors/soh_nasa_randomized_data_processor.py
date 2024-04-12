@@ -1,20 +1,23 @@
+import json
 import os
+import re
+from abc import ABC
+from datetime import datetime
+from functools import lru_cache
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
-import scipy.io
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
-from functools import lru_cache
-import numpy as np
 
 from src.main.python.data_processors.data_processor import DataProcessor
 
 
-class NasaDatasetDataProcessor(DataProcessor):
+class SohNasaRandomizedDataProcessor(DataProcessor, ABC):
     """
-    The NASA dataset implementation
+    The NASA randomized dataset implementation
     """
 
     def __init__(self, data_directory):
@@ -28,11 +31,11 @@ class NasaDatasetDataProcessor(DataProcessor):
 
     def preprocess_data(self) -> Tuple[Pipeline, pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
         """
-        Preprocesses the data by splitting it into training and testing sets and applying a preprocessing pipeline.
+            Preprocesses the data by splitting it into training and testing sets and applying a preprocessing pipeline.
 
-        :return: The preprocessing pipeline and the split training and testing data (X_train, y_train, X_test, y_test).
-        :rtype: tuple
-        """
+            :return: The preprocessing pipeline and the split training and testing data (X_train, y_train, X_test, y_test).
+            :rtype: tuple
+            """
         battery_filenames = self.__list_battery_files(self.data_directory)
 
         # Split battery data filenames into training and testing sets
@@ -64,7 +67,7 @@ class NasaDatasetDataProcessor(DataProcessor):
             f'{root}\\{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
-            if filename.startswith('B00') and filename.endswith('.mat')
+            if re.match(r'^battery\d{2}\.csv$', filename)
         ])
 
     # Parses battery data into a DataFrame
@@ -81,20 +84,31 @@ class NasaDatasetDataProcessor(DataProcessor):
         """
 
         # Parses individual battery data file into a structured DataFrame
-        battery_df = pd.DataFrame(NasaDatasetDataProcessor.__read_battery_data(file))
-        battery_df['battery_filename'] = file
+        filename, data = SohNasaRandomizedDataProcessor.__read_battery_data(file)
 
-        # Extracting nested data from the battery DataFrame
-        first_level_data = battery_df['cycle'].apply(pd.Series)
-        second_level_data = first_level_data['data'].apply(pd.Series)
+        battery_data = data['summary']
+        battery_data_final = {
+            'battery_filename': filename
+        }
+        for index in battery_data.index.values:
+            battery_data_final[index] = battery_data_final.get(index, {})
+            index_data = battery_data.loc[index]
+            for cycle_index in battery_data['cycle_index']:
+                battery_data_final[index][cycle_index] = index_data[cycle_index] \
+                    if isinstance(index_data, list) \
+                    else index_data
 
-        # Combining and cleaning data
-        battery_df = battery_df.join(first_level_data) \
-            .join(second_level_data)
-        battery_df = battery_df[(battery_df['type'] == 'discharge') & (battery_df['Capacity'].notna())]
-        return battery_df.drop(['cycle', 'data', 'type'], axis=1) \
-            .dropna(axis=1, how='all') \
-            .reset_index(drop=True)
+        battery_data_final = pd.DataFrame(battery_data_final)
+
+        battery_data_final['timestamp'] = battery_data_final['date_time_iso'].apply(
+            lambda x: datetime.fromisoformat(x).timestamp()
+        )
+
+        battery_data_final = battery_data_final.drop('cycle_index', axis=1) \
+            .drop('date_time_iso', axis=1) \
+            .dropna(axis=1, how='all')
+
+        return battery_data_final
 
     @staticmethod
     def read_and_parse_multiple_files(files):
@@ -106,22 +120,21 @@ class NasaDatasetDataProcessor(DataProcessor):
         :return: A DataFrame containing combined data from all files.
         :rtype: pd.DataFrame
         """
-        battery_dfs = [NasaDatasetDataProcessor.__parse_battery_data(file) for file in files]
-        return pd.concat(battery_dfs, ignore_index=True)
+        battery_dfs = [SohNasaRandomizedDataProcessor.__parse_battery_data(file) for file in files]
+        return pd.concat(battery_dfs).reset_index()
 
     @staticmethod
     def __read_battery_data(file):
         """
-        Reads battery data from a .mat file and returns it as a dictionary.
+        Reads battery data from a .csv file and returns it as a dictionary.
 
         :param file: The path of the .mat file to read.
         :type file: str
         :return: A dictionary containing the battery data.
         :rtype: dict
         """
-        battery_name = os.path.splitext(os.path.basename(file))[0]
-        battery_data = scipy.io.loadmat(file, simplify_cells=True)
-        return battery_data[battery_name]
+        battery_data = pd.read_csv(file)
+        return file, battery_data
 
     # Preprocesses the data before fitting the models
     @staticmethod
@@ -134,36 +147,30 @@ class NasaDatasetDataProcessor(DataProcessor):
         :return: Processed feature set X and target variable y.
         :rtype: tuple
         """
-
-        for column_name in ['Voltage_measured', 'Current_measured', 'Temperature_measured', 'Current_load',
-                            'Voltage_load']:
-            NasaDatasetDataProcessor.__describe_nested_data(df, column_name)
-
-        df['Time_max'] = df['Time'].apply(np.max)
-        df = df.drop(['Time', 'time'], axis=1).round(5)
+        df = df.dropna(axis=0)
 
         # Preparing the target variable 'y' and feature set 'X'
-        y = pd.to_numeric(df['Capacity'] / 2, errors='coerce').apply(lambda health: 1 if health >= 1 else health)
-        X = df.drop(['Capacity'], axis=1).drop(y[y.isna()].index).dropna()
-        y = y.drop(y[y.isna()].index)
+        X = df.drop(['discharge_capacity'], axis=1)
+        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce') \
+            .apply(lambda health: 1 if health >= 1 else health)
 
         return X, y
 
     @staticmethod
-    def __describe_nested_data(df, column_name):
+    def __describe_nested_data(series, column_name):
         """
         Helper method for preprocessing: computes statistical metrics for a given column in the DataFrame.
 
-        :param df: The DataFrame to process.
-        :type df: pd.DataFrame
+        :param series: The DataFrame to process.
+        :type series: pd.Series
         :param column_name: The name of the column to compute statistics for.
         :type column_name: str
         """
 
-        df[f'{column_name}_max'] = df[column_name].apply(np.max)
-        df[f'{column_name}_min'] = df[column_name].apply(np.min)
-        df[f'{column_name}_avg'] = df[column_name].apply(np.average)
-        df[f'{column_name}_std'] = df[column_name].apply(np.std)
+        series[f'{column_name}_max'] = np.max(series[column_name])
+        series[f'{column_name}_min'] = np.min(series[column_name])
+        series[f'{column_name}_avg'] = np.average(series[column_name])
+        series[f'{column_name}_std'] = np.std(series[column_name])
         # Uncomment the following line if kurtosis is required
-        # df[f'{column_name}_kurt'] = df[column_name].apply(kurtosis)
-        df.drop([column_name], axis=1, inplace=True)
+        # df[f'{column_name}_kurt'] = kurtosis(df[column_name])
+        series.drop([column_name], inplace=True)

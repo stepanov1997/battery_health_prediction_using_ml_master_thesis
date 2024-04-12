@@ -13,7 +13,7 @@ import numpy as np
 from src.main.python.data_processors.data_processor import DataProcessor
 
 
-class PanasonicDatasetDataProcessor(DataProcessor):
+class SohPanasonicDatasetDataProcessor(DataProcessor):
     """
     The Panasonic dataset implementation
     """
@@ -82,14 +82,14 @@ class PanasonicDatasetDataProcessor(DataProcessor):
         """
 
         # Parses individual battery data file into a structured DataFrame
-        data = PanasonicDatasetDataProcessor.__read_battery_data(file)
+        data = SohPanasonicDatasetDataProcessor.__read_battery_data(file)
         battery_series = pd.Series(data)
         battery_series['battery_filename'] = file
 
         # Combining and cleaning data
         for column_name in ['Voltage', 'Current', 'Wh', 'Power', 'Battery_Temp_degC', 'Time',
                             'Chamber_Temp_degC']:
-            PanasonicDatasetDataProcessor.__describe_nested_data(battery_series, column_name)
+            SohPanasonicDatasetDataProcessor.__describe_nested_data(battery_series, column_name)
 
         battery_series['Ah'] = np.median(battery_series['Ah'])
 
@@ -105,7 +105,7 @@ class PanasonicDatasetDataProcessor(DataProcessor):
         :return: A DataFrame containing combined data from all files.
         :rtype: pd.DataFrame
         """
-        battery_dfs = [PanasonicDatasetDataProcessor.__parse_battery_data(file) for file in files]
+        battery_dfs = [SohPanasonicDatasetDataProcessor.__parse_battery_data(file) for file in files]
         return pd.concat(battery_dfs, axis=1).transpose()
 
     @staticmethod

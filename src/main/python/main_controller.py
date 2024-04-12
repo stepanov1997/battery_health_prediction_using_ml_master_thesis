@@ -5,7 +5,12 @@ from data_processors.data_processor import DataProcessor
 from model_trainer import ModelTrainer
 from results_processor import ResultsProcessor
 from serialization_util import SerializationUtil
-from src.main.python.data_processors.toyota_dataset_data_processor import ToyotaDatasetDataProcessor
+from src.main.python.data_processors.rul_nasa_dataset_data_processor import RulNasaDatasetDataProcessor
+from src.main.python.data_processors.rul_toyota_dataset_data_processor import RulToyotaDatasetDataProcessor
+from src.main.python.data_processors.soh_nasa_dataset_data_processor import SohNasaDatasetDataProcessor
+from src.main.python.data_processors.soh_nasa_randomized_data_processor import SohNasaRandomizedDataProcessor
+from src.main.python.data_processors.soh_panasonic_dataset_data_processor import SohPanasonicDatasetDataProcessor
+from src.main.python.data_processors.soh_toyota_dataset_data_processor import SohToyotaDatasetDataProcessor
 
 NASA_DATASET_DIR = "NASA dataset"
 PANASONIC_DATASET_DIR = "Panasonic 18650PF Data"
@@ -41,10 +46,12 @@ class MainController:
         self.data_directory = data_directory
         self.results_processor = ResultsProcessor()
         self.data_processors: Dict[str, DataProcessor] = {
-            # NASA_DATASET_DIR: NasaDatasetDataProcessor(os.path.join(data_directory, NASA_DATASET_DIR)),
-            # PANASONIC_DATASET_DIR: PanasonicDatasetDataProcessor(os.path.join(data_directory, PANASONIC_DATASET_DIR)),
-            TOYOTA_DATASET_DIR: ToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR)),
-            #NASA_RANDOMIZED_DATASET_DIR: NasaRandomizedDataProcessor(os.path.join(data_directory,
+            # NASA_DATASET_DIR: SohNasaDatasetDataProcessor(os.path.join(data_directory, NASA_DATASET_DIR)),
+            NASA_DATASET_DIR: RulNasaDatasetDataProcessor(os.path.join(data_directory, NASA_DATASET_DIR)),
+            # PANASONIC_DATASET_DIR: SohPanasonicDatasetDataProcessor(os.path.join(data_directory, PANASONIC_DATASET_DIR)),
+            # TOYOTA_DATASET_DIR: SohToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR)),
+            # TOYOTA_DATASET_DIR: RulToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR)),
+            # NASA_RANDOMIZED_DATASET_DIR: SohNasaRandomizedDataProcessor(os.path.join(data_directory,
             #                                                                       NASA_RANDOMIZED_DATASET_DIR))
 
         }

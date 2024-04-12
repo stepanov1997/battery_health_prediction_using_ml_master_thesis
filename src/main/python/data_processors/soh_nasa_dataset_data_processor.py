@@ -1,22 +1,20 @@
-import json
 import os
-import re
-from datetime import datetime
-from functools import lru_cache
 from typing import Tuple
 
-import numpy as np
 import pandas as pd
+import scipy.io
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
+from functools import lru_cache
+import numpy as np
 
 from src.main.python.data_processors.data_processor import DataProcessor
 
 
-class ToyotaDatasetDataProcessor(DataProcessor):
+class SohNasaDatasetDataProcessor(DataProcessor):
     """
-    The Toyota dataset implementation
+    The NASA dataset implementation
     """
 
     def __init__(self, data_directory):
@@ -66,7 +64,7 @@ class ToyotaDatasetDataProcessor(DataProcessor):
             f'{root}\\{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
-            if re.match(r'^FastCharge_\d{6}_CH\d{1,2}_structure\.json$', filename)
+            if filename.startswith('B00') and filename.endswith('.mat')
         ])
 
     # Parses battery data into a DataFrame
@@ -83,31 +81,20 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         """
 
         # Parses individual battery data file into a structured DataFrame
-        filename, data = ToyotaDatasetDataProcessor.__read_battery_data(file)
+        battery_df = pd.DataFrame(SohNasaDatasetDataProcessor.__read_battery_data(file))
+        battery_df['battery_filename'] = file
 
-        battery_data = data['summary']
-        battery_data_final = {
-            'battery_filename': filename
-        }
-        for index in battery_data.index.values:
-            battery_data_final[index] = battery_data_final.get(index, {})
-            index_data = battery_data.loc[index]
-            for cycle_index in battery_data['cycle_index']:
-                battery_data_final[index][cycle_index] = index_data[cycle_index] \
-                    if isinstance(index_data, list) \
-                    else index_data
+        # Extracting nested data from the battery DataFrame
+        first_level_data = battery_df['cycle'].apply(pd.Series)
+        second_level_data = first_level_data['data'].apply(pd.Series)
 
-        battery_data_final = pd.DataFrame(battery_data_final)
-
-        battery_data_final['timestamp'] = battery_data_final['date_time_iso'].apply(
-            lambda x: datetime.fromisoformat(x).timestamp()
-        )
-
-        battery_data_final = battery_data_final.drop('cycle_index', axis=1) \
-            .drop('date_time_iso', axis=1) \
-            .dropna(axis=1, how='all')
-
-        return battery_data_final
+        # Combining and cleaning data
+        battery_df = battery_df.join(first_level_data) \
+            .join(second_level_data)
+        battery_df = battery_df[(battery_df['type'] == 'discharge') & (battery_df['Capacity'].notna())]
+        return battery_df.drop(['cycle', 'data', 'type'], axis=1) \
+            .dropna(axis=1, how='all') \
+            .reset_index(drop=True)
 
     @staticmethod
     def read_and_parse_multiple_files(files):
@@ -119,8 +106,8 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         :return: A DataFrame containing combined data from all files.
         :rtype: pd.DataFrame
         """
-        battery_dfs = [ToyotaDatasetDataProcessor.__parse_battery_data(file) for file in files]
-        return pd.concat(battery_dfs).reset_index()
+        battery_dfs = [SohNasaDatasetDataProcessor.__parse_battery_data(file) for file in files]
+        return pd.concat(battery_dfs, ignore_index=True)
 
     @staticmethod
     def __read_battery_data(file):
@@ -132,9 +119,9 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         :return: A dictionary containing the battery data.
         :rtype: dict
         """
-        with open(file, 'r') as f:
-            battery_data = pd.DataFrame(json.loads(f.read()))
-        return file, battery_data
+        battery_name = os.path.splitext(os.path.basename(file))[0]
+        battery_data = scipy.io.loadmat(file, simplify_cells=True)
+        return battery_data[battery_name]
 
     # Preprocesses the data before fitting the models
     @staticmethod
@@ -147,30 +134,36 @@ class ToyotaDatasetDataProcessor(DataProcessor):
         :return: Processed feature set X and target variable y.
         :rtype: tuple
         """
-        df = df.dropna(axis=0)
+
+        for column_name in ['Voltage_measured', 'Current_measured', 'Temperature_measured', 'Current_load',
+                            'Voltage_load']:
+            SohNasaDatasetDataProcessor.__describe_nested_data(df, column_name)
+
+        df['Time_max'] = df['Time'].apply(np.max)
+        df = df.drop(['Time', 'time'], axis=1).round(5)
 
         # Preparing the target variable 'y' and feature set 'X'
-        X = df.drop(['discharge_capacity'], axis=1)
-        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce')\
-              .apply(lambda health: 1 if health >= 1 else health)
+        y = pd.to_numeric(df['Capacity'] / 2, errors='coerce').apply(lambda health: 1 if health >= 1 else health)
+        X = df.drop(['Capacity'], axis=1).drop(y[y.isna()].index).dropna()
+        y = y.drop(y[y.isna()].index)
 
         return X, y
 
     @staticmethod
-    def __describe_nested_data(series, column_name):
+    def __describe_nested_data(df, column_name):
         """
         Helper method for preprocessing: computes statistical metrics for a given column in the DataFrame.
 
-        :param series: The DataFrame to process.
-        :type series: pd.Series
+        :param df: The DataFrame to process.
+        :type df: pd.DataFrame
         :param column_name: The name of the column to compute statistics for.
         :type column_name: str
         """
 
-        series[f'{column_name}_max'] = np.max(series[column_name])
-        series[f'{column_name}_min'] = np.min(series[column_name])
-        series[f'{column_name}_avg'] = np.average(series[column_name])
-        series[f'{column_name}_std'] = np.std(series[column_name])
+        df[f'{column_name}_max'] = df[column_name].apply(np.max)
+        df[f'{column_name}_min'] = df[column_name].apply(np.min)
+        df[f'{column_name}_avg'] = df[column_name].apply(np.average)
+        df[f'{column_name}_std'] = df[column_name].apply(np.std)
         # Uncomment the following line if kurtosis is required
-        # df[f'{column_name}_kurt'] = kurtosis(df[column_name])
-        series.drop([column_name], inplace=True)
+        # df[f'{column_name}_kurt'] = df[column_name].apply(kurtosis)
+        df.drop([column_name], axis=1, inplace=True)

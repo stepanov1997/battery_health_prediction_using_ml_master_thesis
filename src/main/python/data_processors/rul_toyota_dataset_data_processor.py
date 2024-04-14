@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer, LabelEncoder
 
 from src.main.python.data_processors.data_processor import DataProcessor
 
@@ -149,10 +149,45 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
         """
         df = df.dropna(axis=0)
 
-        # Preparing the target variable 'y' and feature set 'X'
-        X = df.drop(['discharge_capacity'], axis=1)
-        y = pd.to_numeric(df['discharge_capacity'] / 1.1, errors='coerce')\
-              .apply(lambda health: 1 if health >= 1 else health)
+        # Label encoder
+        le = LabelEncoder()
+        df['battery_index'] = le.fit_transform(df['battery_filename'])
+
+        threshold = 0.88  # 1.1*80%
+
+        if 'cycle_index' not in df.columns:
+            df['cycle_index'] = df.groupby('battery_index').cumcount() + 1
+
+        threshold_rolling_median = 0.5
+
+        df['discharge_capacity'] = (pd.to_numeric(df['discharge_capacity'], errors='coerce').mask(
+            df['discharge_capacity'].rolling(window=3, min_periods=1).median()
+            - df['discharge_capacity'] > threshold_rolling_median,
+            df['discharge_capacity'].rolling(window=3, min_periods=1).median()
+        ))
+
+        def rul_per_group(group):
+            below_threshold_cycle = group[group['discharge_capacity'] < threshold]['cycle_index'].min()
+            group['RUL'] = np.nan \
+                if pd.isna(below_threshold_cycle) \
+                else np.maximum(below_threshold_cycle - group['cycle_index'], 0)
+            return group
+
+        df = df.groupby('battery_index').apply(rul_per_group)
+
+        valid_indices = df.dropna(subset=['RUL'])['battery_index'].unique()
+        df = df[df['battery_index'].isin(valid_indices)]
+
+        df.reset_index(drop=True, inplace=True)
+
+        df = df.groupby('battery_index').apply(lambda x: x.head(100))
+
+        df.reset_index(drop=True, inplace=True)
+
+        df = df.drop(columns=['charge_capacity', 'discharge_capacity', 'index'])
+
+        X = df.drop(columns=['RUL'])
+        y = df['RUL']
 
         return X, y
 

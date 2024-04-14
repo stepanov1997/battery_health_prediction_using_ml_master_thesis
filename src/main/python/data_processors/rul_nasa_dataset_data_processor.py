@@ -12,8 +12,6 @@ from sklearn.preprocessing import LabelEncoder
 
 from src.main.python.data_processors.data_processor import DataProcessor
 
-le = LabelEncoder()
-
 
 class RulNasaDatasetDataProcessor(DataProcessor):
     """
@@ -146,6 +144,7 @@ class RulNasaDatasetDataProcessor(DataProcessor):
         df = df.drop(['Time', 'time'], axis=1).round(5)
 
         # Label encoder
+        le = LabelEncoder()
         df['battery_index'] = le.fit_transform(df['battery_filename'])
 
         threshold = 1.6  # 2*80%

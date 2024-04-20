@@ -63,7 +63,7 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
         :rtype: pd.Series
         """
         return pd.Series([
-            f'{root}\\{filename}'
+            f'{root}{os.sep}{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
             if re.match(r'^FastCharge_\d{6}_CH\d{1,2}_structure\.json$', filename)

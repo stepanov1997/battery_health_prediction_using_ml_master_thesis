@@ -62,7 +62,7 @@ class RulNasaDatasetDataProcessor(DataProcessor):
         :rtype: pd.Series
         """
         return pd.Series([
-            f'{root}\\{filename}'
+            f'{root}{os.sep}{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
             if filename.startswith('B00') and filename.endswith('.mat')
@@ -144,10 +144,10 @@ class RulNasaDatasetDataProcessor(DataProcessor):
         df = df.drop(['Time', 'time'], axis=1).round(5)
 
         # Label encoder
-        le = LabelEncoder()
-        df['battery_index'] = le.fit_transform(df['battery_filename'])
+        battery_index_label_encoder = LabelEncoder()
+        df['battery_index'] = battery_index_label_encoder.fit_transform(df['battery_filename'])
 
-        threshold = 1.6  # 2*80%
+        threshold = 0.6  # 2*30%
 
         if 'cycle_index' not in df.columns:
             df['cycle_index'] = df.groupby('battery_index').cumcount() + 1
@@ -173,6 +173,9 @@ class RulNasaDatasetDataProcessor(DataProcessor):
             return group
 
         df = df.groupby('battery_index').apply(rul_per_group)
+
+        type_label_encoder = LabelEncoder()
+        df['type'] = type_label_encoder.fit_transform(df['type'])
 
         valid_indices = df.dropna(subset=['RUL'])['battery_index'].unique()
         df = df[df['battery_index'].isin(valid_indices)]

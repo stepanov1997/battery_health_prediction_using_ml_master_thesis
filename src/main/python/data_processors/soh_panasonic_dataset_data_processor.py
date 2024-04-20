@@ -62,7 +62,7 @@ class SohPanasonicDatasetDataProcessor(DataProcessor):
         :rtype: pd.Series
         """
         return pd.Series([
-            f'{root}\\{filename}'
+            f'{root}{os.sep}{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
             if re.match(r'\d{2}-\d{2}-\d{2}_\d{2}\.\d{2} \d+_.*\.mat', filename)

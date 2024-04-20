@@ -64,7 +64,7 @@ class SohNasaRandomizedDataProcessor(DataProcessor, ABC):
         :rtype: pd.Series
         """
         return pd.Series([
-            f'{root}\\{filename}'
+            f'{root}{os.sep}{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
             if re.match(r'^battery\d{2}\.csv$', filename)

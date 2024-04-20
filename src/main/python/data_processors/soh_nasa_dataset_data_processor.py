@@ -61,7 +61,7 @@ class SohNasaDatasetDataProcessor(DataProcessor):
         :rtype: pd.Series
         """
         return pd.Series([
-            f'{root}\\{filename}'
+            f'{root}{os.sep}{filename}'
             for root, _, filenames in os.walk(root)
             for filename in filenames
             if filename.startswith('B00') and filename.endswith('.mat')

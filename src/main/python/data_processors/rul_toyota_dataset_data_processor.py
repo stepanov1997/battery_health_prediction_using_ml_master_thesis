@@ -175,6 +175,8 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
 
         df = df.groupby('battery_index').apply(rul_per_group)
 
+        df = df.dropna()
+
         valid_indices = df.dropna(subset=['RUL'])['battery_index'].unique()
         df = df[df['battery_index'].isin(valid_indices)]
 

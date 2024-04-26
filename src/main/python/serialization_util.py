@@ -1,6 +1,7 @@
 import os
 import json
 import dill as pickle
+from scikeras.wrappers import KerasRegressor, KerasClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.model_selection import GridSearchCV, GroupKFold
@@ -48,6 +49,9 @@ class SerializationUtil:
         estimator_filename = f'estimator_{statistics["mse"]}_{name}'
 
         # Serializing and saving the estimator using pickle
+        if isinstance(estimator[name], (KerasRegressor, KerasClassifier)):
+            estimator[name].model_.save(os.path.join(estimators_subfolder, f'{estimator_filename}.keras'))
+
         with open(os.path.join(estimators_subfolder, f'{estimator_filename}.pkl'), 'wb') as file:
             pickle.dump(estimator, file)
 

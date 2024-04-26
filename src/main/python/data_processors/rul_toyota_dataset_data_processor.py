@@ -9,11 +9,12 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, LabelEncoder
+from sklearn.preprocessing import FunctionTransformer, LabelEncoder, StandardScaler
 
 from src.main.python.data_processors.data_processor import DataProcessor
 
 
+# noinspection PyPackageRequirements
 class RulToyotaDatasetDataProcessor(DataProcessor):
     """
     The Toyota dataset implementation
@@ -171,9 +172,13 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
             group['RUL'] = np.nan \
                 if pd.isna(below_threshold_cycle) \
                 else np.maximum(below_threshold_cycle - group['cycle_index'], 0)
+
+            group['RUL'] = group['RUL'] / np.max(group['RUL'])
             return group
 
         df = df.groupby('battery_index').apply(rul_per_group)
+
+        df = df.dropna()
 
         valid_indices = df.dropna(subset=['RUL'])['battery_index'].unique()
         df = df[df['battery_index'].isin(valid_indices)]
@@ -184,7 +189,7 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
 
         df.reset_index(drop=True, inplace=True)
 
-        df = df.drop(columns=['charge_capacity', 'discharge_capacity', 'index'])
+        df = df.drop(columns=['discharge_capacity', 'battery_index', 'cycle_index'])
 
         X = df.drop(columns=['RUL'])
         y = df['RUL']

@@ -1,3 +1,5 @@
+import os
+
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestRegressor
 from catboost import CatBoostRegressor
@@ -6,6 +8,18 @@ from sklearn.svm import SVR
 from scikeras.wrappers import KerasRegressor
 from neural_network_generator import NeuralNetworkGenerator
 
+TOYOTA_RESULTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+                     'data', 'Toyota', 'results')
+
+MLP_TRANSFER_LEARNING_MODEL_PATH = os.path.join(
+    TOYOTA_RESULTS_DIR,
+    '2024-05-04-20-22-22-catboost-8.4e-07', 'estimators', 'estimator_1.04e-06_mlp-nn.keras'
+)
+
+CNN_TRANSFER_LEARNING_MODEL_PATH = os.path.join(
+    TOYOTA_RESULTS_DIR,
+    '2024-05-04-20-22-22-catboost-8.4e-07', 'estimators', 'estimator_3.2e-06_cnn-nn.keras'
+)
 
 def load_estimators_data(input_shape):
     return [
@@ -77,84 +91,84 @@ def load_estimators_data(input_shape):
         #         "random_forest__bootstrap": [True],
         #     }
         # },
-        {
-            'estimator': ('catboost', CatBoostRegressor()),
-            'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'catboost__depth': [4, 5, 6],
-                # 'catboost__learning_rate': [0.01, 0.1, 0.2],
-                # 'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
-                # 'catboost__min_child_samples': [100, 200, 300],
-                # 'catboost__subsample': [0.5, 0.75, 1],
-                # 'catboost__colsample_bylevel': [0.5, 0.75, 1],
-                # 'catboost__loss_function': ["RMSE", "MAE", "Quantile:alpha=0.5"],
-                # 'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
-                # 'catboost__eval_metric': ["RMSE", "MAE", "R2"]
-
-                # # Best results (NASA-SOH)
-                # "scaler__with_std": [False],
-                # "catboost__depth": [4],
-                # "catboost__learning_rate": [0.1],
-                # "catboost__l2_leaf_reg": [0.1],
-                # "catboost__min_child_samples": [100],
-                # "catboost__subsample": [0.75],
-                # "catboost__colsample_bylevel": [0.75],
-                # "catboost__loss_function": ["RMSE"],
-                # "catboost__bootstrap_type": ["Bernoulli"],
-                # "catboost__eval_metric": ["RMSE"],
-
-                # Best results (TOYOTA-SOH)
-                "catboost__bootstrap_type": ["MVS"],
-                "catboost__colsample_bylevel": [0.75],
-                "catboost__depth": [4],
-                "catboost__eval_metric": ["RMSE"],
-                "catboost__l2_leaf_reg": [0.2],
-                "catboost__learning_rate": [0.2],
-                "catboost__loss_function": ["RMSE"],
-                "catboost__min_child_samples": [100],
-                "catboost__subsample": [0.5],
-                "scaler__with_std": [False]
-            }
-        },
-        {
-            'estimator': ('xgboost', XGBRegressor(n_jobs=-1)),
-            'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'xgboost__n_estimators': [50, 100, 300],
-                # 'xgboost__max_depth': [4, 5, 6],
-                # 'xgboost__learning_rate': [0.01, 0.1, 0.2],
-                # 'xgboost__min_child_weight': [1, 2, 3],
-                # 'xgboost__gamma': [0, 0.1, 0.2, 0.3],
-                # 'xgboost__subsample': [0.5, 0.75, 1],
-                # 'xgboost__colsample_bytree': [0.5, 0.75, 1],
-                # 'xgboost__reg_alpha': [0, 0.1, 0.5],
-                # 'xgboost__reg_lambda': [0, 0.1, 0.5]
-
-                # # Best results (NASA-SOH)
-                # "scaler__with_std": [True],
-                # "xgboost__n_estimators": [300],
-                # "xgboost__max_depth": [6],
-                # "xgboost__learning_rate": [0.1],
-                # "xgboost__min_child_weight": [2],
-                # "xgboost__gamma": [0],
-                # "xgboost__subsample": [0.75],
-                # "xgboost__colsample_bytree": [0.5],
-                # "xgboost__reg_alpha": [0],
-                # "xgboost__reg_lambda": [0.5],
-
-                # Best results (Toyota-SOH)
-                "scaler__with_std": [True],
-                "xgboost__colsample_bytree": [1],
-                "xgboost__gamma": [0],
-                "xgboost__learning_rate": [0.1],
-                "xgboost__max_depth": [4],
-                "xgboost__min_child_weight": [1],
-                "xgboost__n_estimators": [100],
-                "xgboost__reg_alpha": [0.1],
-                "xgboost__reg_lambda": [0.5],
-                "xgboost__subsample": [1]
-            }
-        },
+        # {
+        #     'estimator': ('catboost', CatBoostRegressor()),
+        #     'grid_param': {
+        #         # 'scaler__with_std': [True, False],
+        #         # 'catboost__depth': [4, 5, 6],
+        #         # 'catboost__learning_rate': [0.01, 0.1, 0.2],
+        #         # 'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
+        #         # 'catboost__min_child_samples': [100, 200, 300],
+        #         # 'catboost__subsample': [0.5, 0.75, 1],
+        #         # 'catboost__colsample_bylevel': [0.5, 0.75, 1],
+        #         # 'catboost__loss_function': ["RMSE", "MAE", "Quantile:alpha=0.5"],
+        #         # 'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
+        #         # 'catboost__eval_metric': ["RMSE", "MAE", "R2"]
+        #
+        #         # # Best results (NASA-SOH)
+        #         # "scaler__with_std": [False],
+        #         # "catboost__depth": [4],
+        #         # "catboost__learning_rate": [0.1],
+        #         # "catboost__l2_leaf_reg": [0.1],
+        #         # "catboost__min_child_samples": [100],
+        #         # "catboost__subsample": [0.75],
+        #         # "catboost__colsample_bylevel": [0.75],
+        #         # "catboost__loss_function": ["RMSE"],
+        #         # "catboost__bootstrap_type": ["Bernoulli"],
+        #         # "catboost__eval_metric": ["RMSE"],
+        #
+        #         # Best results (TOYOTA-SOH)
+        #         "catboost__bootstrap_type": ["MVS"],
+        #         "catboost__colsample_bylevel": [0.75],
+        #         "catboost__depth": [4],
+        #         "catboost__eval_metric": ["RMSE"],
+        #         "catboost__l2_leaf_reg": [0.2],
+        #         "catboost__learning_rate": [0.2],
+        #         "catboost__loss_function": ["RMSE"],
+        #         "catboost__min_child_samples": [100],
+        #         "catboost__subsample": [0.5],
+        #         "scaler__with_std": [False]
+        #     }
+        # },
+        # {
+        #     'estimator': ('xgboost', XGBRegressor(n_jobs=-1)),
+        #     'grid_param': {
+        #         # 'scaler__with_std': [True, False],
+        #         # 'xgboost__n_estimators': [50, 100, 300],
+        #         # 'xgboost__max_depth': [4, 5, 6],
+        #         # 'xgboost__learning_rate': [0.01, 0.1, 0.2],
+        #         # 'xgboost__min_child_weight': [1, 2, 3],
+        #         # 'xgboost__gamma': [0, 0.1, 0.2, 0.3],
+        #         # 'xgboost__subsample': [0.5, 0.75, 1],
+        #         # 'xgboost__colsample_bytree': [0.5, 0.75, 1],
+        #         # 'xgboost__reg_alpha': [0, 0.1, 0.5],
+        #         # 'xgboost__reg_lambda': [0, 0.1, 0.5]
+        #
+        #         # # Best results (NASA-SOH)
+        #         # "scaler__with_std": [True],
+        #         # "xgboost__n_estimators": [300],
+        #         # "xgboost__max_depth": [6],
+        #         # "xgboost__learning_rate": [0.1],
+        #         # "xgboost__min_child_weight": [2],
+        #         # "xgboost__gamma": [0],
+        #         # "xgboost__subsample": [0.75],
+        #         # "xgboost__colsample_bytree": [0.5],
+        #         # "xgboost__reg_alpha": [0],
+        #         # "xgboost__reg_lambda": [0.5],
+        #
+        #         # Best results (Toyota-SOH)
+        #         "scaler__with_std": [True],
+        #         "xgboost__colsample_bytree": [1],
+        #         "xgboost__gamma": [0],
+        #         "xgboost__learning_rate": [0.1],
+        #         "xgboost__max_depth": [4],
+        #         "xgboost__min_child_weight": [1],
+        #         "xgboost__n_estimators": [100],
+        #         "xgboost__reg_alpha": [0.1],
+        #         "xgboost__reg_lambda": [0.5],
+        #         "xgboost__subsample": [1]
+        #     }
+        # },
         # {
         #     'estimator': ('svm', SVR(max_iter=1000)),
         #     'grid_param': {
@@ -177,34 +191,78 @@ def load_estimators_data(input_shape):
         #     }
         # },
         # Neural networks
+        # {
+        #     'estimator': ('mlp-nn', KerasRegressor(model=NeuralNetworkGenerator.generate_mlp_model(input_shape))),
+        #     'grid_param': {
+        #         # 'scaler__with_std': [True, False],
+        #         # 'mlp-nn__epochs': [50],
+        #         # 'mlp-nn__batch_size': [128],
+        #         # 'mlp-nn__model__neurons_layer_1': [32, 64, 128],
+        #         # 'mlp-nn__model__neurons_layer_2': [16, 32, 64],
+        #         # 'mlp-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
+        #         # 'mlp-nn__model__optimizer': ['rmsprop', 'adam'],
+        #
+        #         # # Best results (NASA-SOH)
+        #         # 'scaler__with_std': [True],
+        #         # "mlp-nn__epochs": [50],
+        #         # "mlp-nn__batch_size": [128],
+        #         # "mlp-nn__model__neurons_layer_1": [64],
+        #         # "mlp-nn__model__neurons_layer_2": [64],
+        #         # "mlp-nn__model__activation": ["tanh"],
+        #         # "mlp-nn__model__optimizer": ["adam"],
+        #
+        #         # Best results (Toyota-SOH)
+        #         "mlp-nn__batch_size": [128],
+        #         "mlp-nn__epochs": [50],
+        #         "mlp-nn__model__activation": ["sigmoid"],
+        #         "mlp-nn__model__neurons_layer_1": [128],
+        #         "mlp-nn__model__neurons_layer_2": [16],
+        #         "mlp-nn__model__optimizer": ["adam"],
+        #         "scaler__with_std": [True]
+        #     }
+        # },
+        # Transfer learning (MLP)
         {
-            'estimator': ('mlp-nn', KerasRegressor(model=NeuralNetworkGenerator.generate_mlp_model(input_shape))),
+            'estimator': ('mlp-tl-nn', KerasRegressor(model=NeuralNetworkGenerator.generate_transfer_learning_model(
+                MLP_TRANSFER_LEARNING_MODEL_PATH
+            ))),
             'grid_param': {
                 # 'scaler__with_std': [True, False],
-                # 'mlp-nn__epochs': [50],
-                # 'mlp-nn__batch_size': [128],
-                # 'mlp-nn__model__neurons_layer_1': [32, 64, 128],
-                # 'mlp-nn__model__neurons_layer_2': [16, 32, 64],
-                # 'mlp-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
-                # 'mlp-nn__model__optimizer': ['rmsprop', 'adam'],
+                # 'mlp-tl-nn__epochs': [50],
+                # 'mlp-tl-nn__batch_size': [128],
+                # 'mlp-tl-nn__model__neurons_layer_3': [4, 8, 16],
+                # 'mlp-tl-nn__model__activation': ['relu', 'tanh', 'linear', 'sigmoid'],
+                # 'mlp-tl-nn__model__optimizer': ['rmsprop', 'adam'],
 
-                # # Best results (NASA-SOH)
-                # 'scaler__with_std': [True],
-                # "mlp-nn__epochs": [50],
-                # "mlp-nn__batch_size": [128],
-                # "mlp-nn__model__neurons_layer_1": [64],
-                # "mlp-nn__model__neurons_layer_2": [64],
-                # "mlp-nn__model__activation": ["tanh"],
-                # "mlp-nn__model__optimizer": ["adam"],
-
-                # Best results (Toyota-SOH)
-                "mlp-nn__batch_size": [128],
-                "mlp-nn__epochs": [50],
-                "mlp-nn__model__activation": ["sigmoid"],
-                "mlp-nn__model__neurons_layer_1": [128],
-                "mlp-nn__model__neurons_layer_2": [16],
-                "mlp-nn__model__optimizer": ["adam"],
+                # Best results (Toyota-RUL)
+                "mlp-tl-nn__batch_size": [128],
+                "mlp-tl-nn__epochs": [50],
+                "mlp-tl-nn__model__activation": ["linear"],
+                "mlp-tl-nn__model__neurons_layer_3": [16],
+                "mlp-tl-nn__model__optimizer": ["rmsprop"],
                 "scaler__with_std": [True]
+            }
+        },
+        # Transfer learning (CNN)
+        {
+            'estimator': ('cnn-tl-nn', KerasRegressor(model=NeuralNetworkGenerator.generate_transfer_learning_model(
+                CNN_TRANSFER_LEARNING_MODEL_PATH
+            ))),
+            'grid_param': {
+                'scaler__with_std': [True, False],
+                'cnn-tl-nn__epochs': [50],
+                'cnn-tl-nn__batch_size': [128],
+                'cnn-tl-nn__model__neurons_layer_3': [4, 8, 16],
+                'cnn-tl-nn__model__activation': ['relu', 'tanh', 'linear', 'sigmoid'],
+                'cnn-tl-nn__model__optimizer': ['rmsprop', 'adam']
+
+                # Best results (Toyota-RUL)
+                # "cnn-tl-nn__batch_size": [128],
+                # "cnn-tl-nn__epochs": [50],
+                # "cnn-tl-nn__model__activation": ["linear"],
+                # "cnn-tl-nn__model__neurons_layer_3": [16],
+                # "cnn-tl-nn__model__optimizer": ["rmsprop"],
+                # "scaler__with_std": [True]
             }
         },
         # {
@@ -228,37 +286,37 @@ def load_estimators_data(input_shape):
         #         "lstm-nn__model__optimizer": ["rmsprop"],
         #     }
         # },
-        {
-            'estimator': ('cnn-nn', KerasRegressor(model=NeuralNetworkGenerator.create_cnn_model(input_shape))),
-            'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'cnn-nn__epochs': [50],
-                # 'cnn-nn__batch_size': [128],
-                # 'cnn-nn__model__filters': [32, 64, 128],
-                # 'cnn-nn__model__kernel_size': [2, 3, 5],
-                # 'cnn-nn__model__dense_units': [10, 20, 50],
-                # 'cnn-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
-                # 'cnn-nn__model__optimizer': ['rmsprop', 'adam']
-
-                # # Best results (NASA-SOH)
-                # "scaler__with_std": [False],
-                # "cnn-nn__epochs": [50],
-                # "cnn-nn__batch_size": [128],
-                # "cnn-nn__model__filters": [128],
-                # "cnn-nn__model__kernel_size": [3],
-                # "cnn-nn__model__dense_units": [10],
-                # "cnn-nn__model__activation": ["tanh"],
-                # "cnn-nn__model__optimizer": ["adam"],
-
-                # Best results (Toyota-SOH)
-                "cnn-nn__batch_size": [128],
-                "cnn-nn__epochs": [50],
-                "cnn-nn__model__activation": ["tanh"],
-                "cnn-nn__model__dense_units": [10],
-                "cnn-nn__model__filters": [64],
-                "cnn-nn__model__kernel_size": [2],
-                "cnn-nn__model__optimizer": ["adam"],
-                "scaler__with_std": [True]
-            }
-        }
+        # {
+        #     'estimator': ('cnn-nn', KerasRegressor(model=NeuralNetworkGenerator.create_cnn_model(input_shape))),
+        #     'grid_param': {
+        #         # 'scaler__with_std': [True, False],
+        #         # 'cnn-nn__epochs': [50],
+        #         # 'cnn-nn__batch_size': [128],
+        #         # 'cnn-nn__model__filters': [32, 64, 128],
+        #         # 'cnn-nn__model__kernel_size': [2, 3, 5],
+        #         # 'cnn-nn__model__dense_units': [10, 20, 50],
+        #         # 'cnn-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
+        #         # 'cnn-nn__model__optimizer': ['rmsprop', 'adam']
+        #
+        #         # # Best results (NASA-SOH)
+        #         # "scaler__with_std": [False],
+        #         # "cnn-nn__epochs": [50],
+        #         # "cnn-nn__batch_size": [128],
+        #         # "cnn-nn__model__filters": [128],
+        #         # "cnn-nn__model__kernel_size": [3],
+        #         # "cnn-nn__model__dense_units": [10],
+        #         # "cnn-nn__model__activation": ["tanh"],
+        #         # "cnn-nn__model__optimizer": ["adam"],
+        #
+        #         # Best results (Toyota-SOH)
+        #         "cnn-nn__batch_size": [128],
+        #         "cnn-nn__epochs": [50],
+        #         "cnn-nn__model__activation": ["tanh"],
+        #         "cnn-nn__model__dense_units": [10],
+        #         "cnn-nn__model__filters": [64],
+        #         "cnn-nn__model__kernel_size": [2],
+        #         "cnn-nn__model__optimizer": ["adam"],
+        #         "scaler__with_std": [True]
+        #     }
+        # }
     ]

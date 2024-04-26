@@ -1,3 +1,4 @@
+import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Conv1D, MaxPooling1D, Flatten
 
@@ -68,6 +69,31 @@ class NeuralNetworkGenerator:
             model.add(Flatten())
             model.add(Dense(dense_units, activation=activation))
             model.add(Dense(1, activation='linear'))
+
+            model.compile(optimizer=optimizer, loss='mean_squared_error')
+            return model
+
+        return model_function
+
+    @staticmethod
+    def generate_transfer_learning_model(model_path):
+        """
+        Generates a Multi-Layer Perceptron (MLP) Neural Network model.
+
+        :param input_shape: The shape of the input data.
+        :type input_shape: int
+        :return: A function that creates an MLP model when called with the specified parameters.
+        :rtype: function
+        """
+        def model_function(optimizer='adam', neurons_layer_3=8, activation='relu'):
+            model = keras.models.load_model(model_path)
+            model.pop()
+
+            for layer in model.layers:
+                layer.trainable = False
+
+            model.add(Dense(neurons_layer_3, activation=activation, name='neurons_layer_3'))
+            model.add(Dense(1, activation='linear', name='dense_output'))
 
             model.compile(optimizer=optimizer, loss='mean_squared_error')
             return model

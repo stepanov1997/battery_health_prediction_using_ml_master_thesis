@@ -87,7 +87,7 @@ class ModelTrainer:
         """
         y_pred = grid_search.predict(X_test)
 
-        mse = round(mean_squared_error(y_test, y_pred), 4)
+        mse = round(mean_squared_error(y_test, y_pred), 8)
         r2 = r2_score(y_test, y_pred)
 
         return mse, r2

@@ -155,22 +155,3 @@ class SohToyotaDatasetDataProcessor(DataProcessor):
               .apply(lambda health: 1 if health >= 1 else health)
 
         return X, y
-
-    @staticmethod
-    def __describe_nested_data(series, column_name):
-        """
-        Helper method for preprocessing: computes statistical metrics for a given column in the DataFrame.
-
-        :param series: The DataFrame to process.
-        :type series: pd.Series
-        :param column_name: The name of the column to compute statistics for.
-        :type column_name: str
-        """
-
-        series[f'{column_name}_max'] = np.max(series[column_name])
-        series[f'{column_name}_min'] = np.min(series[column_name])
-        series[f'{column_name}_avg'] = np.average(series[column_name])
-        series[f'{column_name}_std'] = np.std(series[column_name])
-        # Uncomment the following line if kurtosis is required
-        # df[f'{column_name}_kurt'] = kurtosis(df[column_name])
-        series.drop([column_name], inplace=True)

@@ -49,8 +49,8 @@ class MainController:
             # NASA_DATASET_DIR: SohNasaDatasetDataProcessor(os.path.join(data_directory, NASA_DATASET_DIR)),
             # NASA_DATASET_DIR: RulNasaDatasetDataProcessor(os.path.join(data_directory, NASA_DATASET_DIR)),
             # PANASONIC_DATASET_DIR: SohPanasonicDatasetDataProcessor(os.path.join(data_directory, PANASONIC_DATASET_DIR)),
-            # TOYOTA_DATASET_DIR: SohToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR)),
-            TOYOTA_DATASET_DIR: RulToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR)),
+            TOYOTA_DATASET_DIR: SohToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR)),
+            # TOYOTA_DATASET_DIR: RulToyotaDatasetDataProcessor(os.path.join(data_directory, TOYOTA_DATASET_DIR)),
             # NASA_RANDOMIZED_DATASET_DIR: SohNasaRandomizedDataProcessor(os.path.join(data_directory,
             #                                                                       NASA_RANDOMIZED_DATASET_DIR))
 

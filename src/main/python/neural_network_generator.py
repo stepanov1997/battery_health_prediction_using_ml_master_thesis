@@ -76,7 +76,7 @@ class NeuralNetworkGenerator:
         return model_function
 
     @staticmethod
-    def generate_transfer_learning_model(model_path):
+    def generate_transfer_learning_model(classes_count, model_path):
         """
         Generates a Multi-Layer Perceptron (MLP) Neural Network model.
 
@@ -85,17 +85,17 @@ class NeuralNetworkGenerator:
         :return: A function that creates an MLP model when called with the specified parameters.
         :rtype: function
         """
-        def model_function(optimizer='adam', neurons_layer_3=8, activation='relu'):
+        def model_function(optimizer='adam', neurons_layer_3=8, activation='relu', loss='mean_squared_error'):
             model = keras.models.load_model(model_path)
             model.pop()
 
             for layer in model.layers:
                 layer.trainable = False
 
-            model.add(Dense(neurons_layer_3, activation=activation, name='neurons_layer_3'))
-            model.add(Dense(1, activation='linear', name='dense_output'))
+            model.add(Dense(neurons_layer_3, activation='relu', name='neurons_layer_3'))
+            model.add(Dense(classes_count, activation=activation, name='dense_output'))
 
-            model.compile(optimizer=optimizer, loss='mean_squared_error')
+            model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
             return model
 
         return model_function

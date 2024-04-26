@@ -46,7 +46,7 @@ class SerializationUtil:
             os.makedirs(estimators_subfolder)
 
         # Filename for the serialized model includes its name and MSE (Mean Squared Error) for easy identification
-        estimator_filename = f'estimator_{statistics["mse"]}_{name}'
+        estimator_filename = f'estimator_{statistics.get("mse", statistics.get("accuracy"))}_{name}'
 
         # Serializing and saving the estimator using pickle
         if isinstance(estimator[name], (KerasRegressor, KerasClassifier)):

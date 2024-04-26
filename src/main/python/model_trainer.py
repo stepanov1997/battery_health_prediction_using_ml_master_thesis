@@ -1,9 +1,14 @@
 import time
+
+from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.model_selection import GridSearchCV, GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, precision_score, recall_score, \
+    accuracy_score, roc_auc_score, multilabel_confusion_matrix, classification_report, mean_squared_log_error, \
+    mean_absolute_error
 import numpy as np
+
 
 class ModelTrainer:
     """
@@ -36,7 +41,8 @@ class ModelTrainer:
         self.serialization_util = serialization_util
         self.estimators_data_retriever = estimators_data_retriever
 
-    def train_model_with_specified_estimator(self, X_train, y_train, estimator_tuple, grid_params):
+    def train_model_with_specified_estimator(self, X_train, y_train, estimator_tuple, grid_params,
+                                             regression_or_classification):
         """
         Trains a model using the specified estimator and hyperparameter grid.
 
@@ -65,13 +71,14 @@ class ModelTrainer:
         # Setting up a GroupKFold for cross-validation and initializing a GridSearchCV for hyperparameter tuning
         group_kfold = GroupKFold(n_splits=5)
         grid_search = GridSearchCV(pipeline, grid_params, verbose=10, cv=group_kfold,
-                                   scoring='neg_mean_squared_error',
+                                   scoring='neg_mean_squared_error' if regression_or_classification == 'regression' else 'accuracy',
                                    n_jobs=-1)
-        grid_search.fit(X_train, y_train.astype(np.float64), groups=groups)
+
+        grid_search.fit(X_train, y_train, groups=groups)
 
         return grid_search
 
-    def compute_error_metrics_on_test_set(self, grid_search, X_test, y_test):
+    def compute_error_metrics_on_test_set(self, grid_search, X_test, y_test, classification_or_regression):
         """
         Computes error metrics for the model on the test dataset.
 
@@ -87,10 +94,30 @@ class ModelTrainer:
         """
         y_pred = grid_search.predict(X_test)
 
-        mse = round(mean_squared_error(y_test, y_pred), 8)
-        r2 = r2_score(y_test, y_pred)
-
-        return mse, r2
+        if classification_or_regression == 'classification':
+            accuracy = accuracy_score(y_test, y_pred)
+            f1 = f1_score(y_test, y_pred, average='macro')
+            precision = precision_score(y_test, y_pred, average='macro')
+            recall = recall_score(y_test, y_pred, average='macro')
+            roc_auc = None
+            try:
+                roc_auc = roc_auc_score(y_test, y_pred, average='macro', multi_class='ovo')
+            except ValueError as ex:
+                print(str(ex))
+            conf_matrix = multilabel_confusion_matrix(y_test, y_pred)
+            conf_matrix_dict = {
+                elem: conf_matrix[index].tolist() for index, elem in
+                enumerate(['expired', 'short_lifespan', 'medium_lifespan', 'long_lifespan', 'very_long_lifespan'])
+            }
+            return accuracy, f1, precision, recall, roc_auc, conf_matrix_dict
+        elif classification_or_regression == 'regression':
+            mse = round(mean_squared_error(y_test, y_pred), 8)
+            r2 = r2_score(y_test, y_pred)
+            mae = mean_absolute_error(y_test, y_pred)
+            mape = np.mean(np.abs(y_test - y_pred) / y_test) * 100
+            msle = mean_squared_log_error(y_test, y_pred)
+            return mse, r2, mae, mape, msle
+        return None
 
     def main_model_training_process(self, train_folder, X_train, y_train, X_test, y_test):
         """
@@ -113,46 +140,85 @@ class ModelTrainer:
         input_shape = X_train.shape[1] - 1
         estimators_data = self.estimators_data_retriever(input_shape)
 
-        best_global_estimator_name = None
-        best_global_mse = 1.0
-        best_global_r2 = 0.0
-        best_global_estimator = None
         results = {}
 
         # Iterating through each estimator and its grid parameters to train and evaluate models
         estimators = [(estimator_dict['estimator'], estimator_dict['grid_param']) for estimator_dict in estimators_data]
         for estimator, grid_param in estimators:
-            fit_start_time = time.perf_counter()
-            grid_search = self.train_model_with_specified_estimator(X_train, y_train, estimator, grid_param)
-            fit_duration = time.perf_counter() - fit_start_time
+            if isinstance(estimator[1], ClassifierMixin):
+                self.process_classification_results(estimator, X_train, y_train, X_test, y_test, grid_param, results,
+                                                    train_folder)
+            elif isinstance(estimator[1], RegressorMixin):
+                self.process_regression_results(estimator, X_train, y_train, X_test, y_test, grid_param, results,
+                                                train_folder)
 
-            prediction_start_time = time.perf_counter()
-            best_local_mse, best_local_r2 = self.compute_error_metrics_on_test_set(grid_search, X_test, y_test)
-            prediction_duration = time.perf_counter() - prediction_start_time
+        return results
 
-            best_local_estimator = grid_search.best_estimator_
-            estimator_name = estimator[0]
+    def process_regression_results(self, estimator, X_train, y_train, X_test, y_test, grid_param, results,
+                                   train_folder):
+        fit_start_time = time.perf_counter()
+        grid_search = self.train_model_with_specified_estimator(X_train, y_train, estimator, grid_param, 'regression')
+        fit_duration = time.perf_counter() - fit_start_time
 
-            # Gathering statistics for each trained model
-            statistics = {
-                'name': estimator_name,
-                'best_params': grid_search.best_params_,
-                'fit_duration': fit_duration,
-                'prediction_duration': prediction_duration,
-                'mse': best_local_mse,
-                'r2': best_local_r2,
-            }
+        prediction_start_time = time.perf_counter()
+        mse, r2, mae, mape, msle = self.compute_error_metrics_on_test_set(grid_search, X_test, y_test,
+                                                                          'regression')
+        prediction_duration = time.perf_counter() - prediction_start_time
 
-            # Saving the trained model and its statistics
-            self.serialization_util.save_trained_estimator(train_folder, estimator_name, best_local_estimator,
-                                                           statistics)
+        best_local_estimator = grid_search.best_estimator_
+        estimator_name = estimator[0]
 
-            results[estimator_name] = statistics
-            # Updating the best global model if the current model performs better
-            if best_local_mse < best_global_mse:
-                best_global_mse = best_local_mse
-                best_global_r2 = best_local_r2
-                best_global_estimator_name = estimator_name
-                best_global_estimator = best_local_estimator
+        # Gathering statistics for each trained model
+        statistics = {
+            'name': estimator_name,
+            'best_params': grid_search.best_params_,
+            'fit_duration': fit_duration,
+            'prediction_duration': prediction_duration,
+            'mse': mse,
+            'r2': r2,
+            'mae': mae,
+            'mape': mape,
+            'msle': msle
+        }
 
-        return results, best_global_estimator_name, best_global_estimator, best_global_mse, best_global_r2
+        # Saving the trained model and its statistics
+        self.serialization_util.save_trained_estimator(train_folder, estimator_name, best_local_estimator,
+                                                       statistics)
+
+        results[estimator_name] = statistics
+
+    def process_classification_results(self, estimator, X_train, y_train, X_test, y_test, grid_param, results,
+                                       train_folder):
+        fit_start_time = time.perf_counter()
+        grid_search = self.train_model_with_specified_estimator(X_train, y_train, estimator, grid_param,
+                                                                'classification')
+        fit_duration = time.perf_counter() - fit_start_time
+
+        prediction_start_time = time.perf_counter()
+        accuracy, f1, precision, recall, roc_auc, conf_matrix = self.compute_error_metrics_on_test_set(grid_search,
+                                                                                                       X_test, y_test,
+                                                                                                       'classification')
+        prediction_duration = time.perf_counter() - prediction_start_time
+
+        best_local_estimator = grid_search.best_estimator_
+        estimator_name = estimator[0]
+
+        # Gathering statistics for each trained model
+        statistics = {
+            'name': estimator_name,
+            'best_params': grid_search.best_params_,
+            'fit_duration': fit_duration,
+            'prediction_duration': prediction_duration,
+            'accuracy': accuracy,
+            'f1': f1,
+            'precision': precision,
+            'recall': recall,
+            'roc_auc': roc_auc,
+            'conf_matrix': conf_matrix
+        }
+
+        # Saving the trained model and its statistics
+        self.serialization_util.save_trained_estimator(train_folder, estimator_name, best_local_estimator,
+                                                       statistics)
+
+        results[estimator_name] = statistics

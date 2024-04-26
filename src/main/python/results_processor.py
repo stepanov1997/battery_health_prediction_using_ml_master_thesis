@@ -39,11 +39,16 @@ class ResultsProcessor:
         :param results: The results of the model training process.
         :type results: dict
         """
-        results = (pd.DataFrame.from_dict(results, orient='index')
-                   .drop(['name'], axis=1)
-                   .sort_values(by='mse')
-                   .to_json())
 
+        results = (pd.DataFrame.from_dict(results, orient='index')
+                   .drop(['name'], axis=1))
+
+        if 'mse' in results.columns:
+            results = results.sort_values(by=['mse'])
+        elif 'accuracy' in results.columns:
+            results = results.sort_values(by=['accuracy'])
+
+        results = results.to_json()
         result_json = json.loads(results)
 
         with open(os.path.join(directory, "results.json"), "w") as f:
@@ -59,15 +64,33 @@ class ResultsProcessor:
         :param results: The results of the model training process.
         :type results: dict
         """
-        results_df = pd.DataFrame.from_dict(results, orient='index') \
-            .drop(['name'], axis=1) \
-            .sort_values(by='mse')
+        results_df = (pd.DataFrame.from_dict(results, orient='index')
+                   .drop(['name'], axis=1))
+
+        if 'mse' in results_df.columns:
+            results_df = results_df.sort_values(by=['mse'])
+        elif 'accuracy' in results_df.columns:
+            results_df = results_df.sort_values(by=['accuracy'])
+
         df_fit_duration = pd.DataFrame(
             {'model': results_df.index, 'fit_duration': results_df['fit_duration']})
         df_prediction_duration = pd.DataFrame(
             {'model': results_df.index, 'prediction_duration': results_df['prediction_duration']})
-        df_mse = pd.DataFrame({'model': results_df.index, 'mse': results_df['mse']})
-        df_r2 = pd.DataFrame({'model': results_df.index, 'r2': results_df['r2']})
+
+        if 'mse' in results_df.columns:
+            df_mse = pd.DataFrame({'model': results_df.index, 'mse': results_df['mse']})
+            df_r2 = pd.DataFrame({'model': results_df.index, 'r2': results_df['r2']})
+            df_mae = pd.DataFrame({'model': results_df.index, 'mae': results_df['mae']})
+            df_mape = pd.DataFrame({'model': results_df.index, 'mape': results_df['mape']})
+            df_msle = pd.DataFrame({'model': results_df.index, 'msle': results_df['msle']})
+
+        elif 'accuracy' in results_df.columns:
+            df_accuracy = pd.DataFrame({'model': results_df.index, 'accuracy': results_df['accuracy']})
+            df_f1 = pd.DataFrame({'model': results_df.index, 'f1': results_df['f1']})
+            df_precision = pd.DataFrame({'model': results_df.index, 'precision': results_df['precision']})
+            df_recall = pd.DataFrame({'model': results_df.index, 'recall': results_df['recall']})
+            df_roc_auc = pd.DataFrame({'model': results_df.index, 'roc_auc': results_df['roc_auc']})
+
 
         # Internal function to create and save charts for different metrics
         def plot_and_save_chart(df, y_label, file_name):
@@ -83,10 +106,22 @@ class ResultsProcessor:
         # Generating and saving charts for various performance metrics
         plot_and_save_chart(df_fit_duration, 'Fit Duration', 'fit_duration_chart')
         plot_and_save_chart(df_prediction_duration, 'Prediction Duration', 'prediction_duration_chart')
-        plot_and_save_chart(df_mse, 'MSE', 'mse_chart')
-        plot_and_save_chart(df_r2, 'R2', 'r2_chart')
+        if 'mse' in results_df.columns:
+            plot_and_save_chart(df_mse, 'MSE', 'mse_chart')
+            plot_and_save_chart(df_r2, 'R2', 'r2_chart')
+            plot_and_save_chart(df_mae, 'R2', 'mae_chart')
+            plot_and_save_chart(df_mape, 'R2', 'mape_chart')
+            plot_and_save_chart(df_msle, 'R2', 'msle_chart')
 
-    def rename_folder_to_contain_best_result(self, directory, best_global_estimator_name, best_global_mse):
+        elif 'accuracy' in results_df.columns:
+            plot_and_save_chart(df_accuracy, 'Accuracy', 'accuracy_chart')
+            plot_and_save_chart(df_f1, 'F1', 'f1_chart')
+            plot_and_save_chart(df_precision, 'PRECISION', 'precision_chart')
+            plot_and_save_chart(df_recall, 'RECALL', 'recall_chart')
+            plot_and_save_chart(df_roc_auc, 'ROC AUC', 'roc_auc_chart')
+
+
+    def rename_folder_to_contain_best_result(self, directory, best_global_estimator_name, best_result):
         """
         Renames the results directory to include the name and MSE of the best-performing model.
 
@@ -97,7 +132,7 @@ class ResultsProcessor:
         :param best_global_mse: The MSE of the best-performing model.
         :type best_global_mse: float
         """
-        os.rename(directory, f"{directory}-{best_global_estimator_name}-{best_global_mse}")
+        os.rename(directory, f"{directory}-{best_global_estimator_name}-{best_result}")
 
     def setup_result_folders(self, directory):
         """

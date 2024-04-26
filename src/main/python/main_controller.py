@@ -1,6 +1,9 @@
 import os
 from typing import Dict
 
+import numpy as np
+import pandas as pd
+
 from data_processors.data_processor import DataProcessor
 from model_trainer import ModelTrainer
 from results_processor import ResultsProcessor
@@ -80,14 +83,35 @@ class MainController:
             self.serialization_util.save_preprocessor(results_directory, preprocessing_pipeline)
 
             # Main training process: training various models and finding the best performing model
-            best_results = self.model_trainer.main_model_training_process(results_directory, X_train, y_train, X_test,
+            results = self.model_trainer.main_model_training_process(results_directory, X_train, y_train, X_test,
                                                                           y_test)
-            (results, best_global_estimator_name, best_global_estimator, best_global_mse, best_global_r2) = best_results
+
+            results_df = pd.DataFrame(data=results).transpose()
+            results_df = results_df.reset_index()
+            mse, r2, regressor_name = None, None, None
+            if 'mse' in results_df.columns:
+                best_global_mse_row_id = results_df['mse'].astype(np.float64).idxmin()
+
+                best_global_mse_row = results_df.iloc[best_global_mse_row_id]
+                mse = best_global_mse_row['mse']
+                regressor_name = best_global_mse_row['name']
+
+            accuracy = None
+            classificator_name = None
+            if 'accuracy' in results_df.columns:
+                best_global_accuracy_row_id = results_df['accuracy'].astype(np.float64).idxmax()
+                best_global_accuracy_row = results_df.iloc[best_global_accuracy_row_id]
+                accuracy = best_global_accuracy_row['accuracy']
+                classificator_name = best_global_accuracy_row['name']
+
+
+            best_result, name = (accuracy, classificator_name) \
+                if accuracy \
+                else (mse, regressor_name)
 
             # Processing and storing the training results, including generating and saving performance charts
             self.results_processor.save_training_results(results_directory, results)
             self.results_processor.generate_and_save_performance_charts(results_directory, results)
 
             # Renaming the results folder to include the name and performance of the best model
-            self.results_processor.rename_folder_to_contain_best_result(results_directory, best_global_estimator_name,
-                                                                        best_global_mse)
+            self.results_processor.rename_folder_to_contain_best_result(results_directory, name, best_result)

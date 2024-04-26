@@ -7,9 +7,10 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, LabelEncoder, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OneHotEncoder
 
 from src.main.python.data_processors.data_processor import DataProcessor
 
@@ -44,7 +45,9 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
         # Define and fit preprocessing pipeline on training data
         preprocessing_pipeline = Pipeline([
             ('read_and_parse_files', FunctionTransformer(func=self.read_and_parse_multiple_files)),
-            ('prefit_preprocessing', FunctionTransformer(func=self.__preprocess_data_before_fitting))
+            ('prefit_preprocessing', FunctionTransformer(func=self.__preprocess_data_before_fitting)),
+            ('label_encoder', LabelEncoderPipelineFriendly(categories=['expired', 'short_lifespan', 'medium_lifespan',
+                                                                       'long_lifespan', 'very_long_lifespan']))
         ])
 
         # Apply the pipeline to both training and test data
@@ -169,11 +172,10 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
 
         def rul_per_group(group):
             below_threshold_cycle = group[group['discharge_capacity'] < threshold]['cycle_index'].min()
-            group['RUL'] = np.nan \
+            group['RUL'] = 0 \
                 if pd.isna(below_threshold_cycle) \
                 else np.maximum(below_threshold_cycle - group['cycle_index'], 0)
 
-            group['RUL'] = group['RUL'] / np.max(group['RUL'])
             return group
 
         df = df.groupby('battery_index').apply(rul_per_group)
@@ -185,32 +187,46 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
 
         df.reset_index(drop=True, inplace=True)
 
-        df = df.groupby('battery_index').apply(lambda x: x.head(100))
-
-        df.reset_index(drop=True, inplace=True)
-
         df = df.drop(columns=['discharge_capacity', 'battery_index', 'cycle_index'])
+
+        def classify_rul(rul):
+            if rul == 0:
+                return 'expired'
+            if rul <= 100:
+                return 'short_lifespan'
+            if rul <= 300:
+                return 'medium_lifespan'
+            if rul <= 500:
+                return 'long_lifespan'
+            return 'very_long_lifespan'
+
+        df['RUL'] = df['RUL'].apply(classify_rul)
 
         X = df.drop(columns=['RUL'])
         y = df['RUL']
 
         return X, y
 
-    @staticmethod
-    def __describe_nested_data(series, column_name):
-        """
-        Helper method for preprocessing: computes statistical metrics for a given column in the DataFrame.
 
-        :param series: The DataFrame to process.
-        :type series: pd.Series
-        :param column_name: The name of the column to compute statistics for.
-        :type column_name: str
-        """
+class LabelEncoderPipelineFriendly(BaseEstimator, TransformerMixin):
+    def __init__(self, categories):
+        self.categories = categories
+        self.encoder = OneHotEncoder(categories=[categories], dtype=np.int64, sparse_output=False)
 
-        series[f'{column_name}_max'] = np.max(series[column_name])
-        series[f'{column_name}_min'] = np.min(series[column_name])
-        series[f'{column_name}_avg'] = np.average(series[column_name])
-        series[f'{column_name}_std'] = np.std(series[column_name])
-        # Uncomment the following line if kurtosis is required
-        # df[f'{column_name}_kurt'] = kurtosis(df[column_name])
-        series.drop([column_name], inplace=True)
+    def fit(self, tuple, y=None):
+        X, y = tuple
+        y_reshaped = np.array(y).reshape(-1, 1)
+        self.encoder.fit(y_reshaped)
+        return self
+
+    def transform(self, tuple):
+        X, y = tuple
+        y_reshaped = y.values.reshape(-1, 1)
+        new_y = pd.DataFrame(data=self.encoder.transform(y_reshaped), columns=self.categories[::-1])
+        return X, new_y
+
+    def fit_transform(self, tuple, y=None, **fit_params):
+        return self.fit(tuple, None).transform(tuple)
+
+    def inverse_transform(self, y):
+        return pd.Series(self.encoder.inverse_transform(y).flatten())

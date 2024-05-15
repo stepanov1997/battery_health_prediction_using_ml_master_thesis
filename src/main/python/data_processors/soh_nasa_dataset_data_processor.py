@@ -3,6 +3,7 @@ from typing import Tuple
 
 import pandas as pd
 import scipy.io
+from scipy.interpolate import interp1d
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -91,7 +92,7 @@ class SohNasaDatasetDataProcessor(DataProcessor):
         # Combining and cleaning data
         battery_df = battery_df.join(first_level_data) \
             .join(second_level_data)
-        battery_df = battery_df[(battery_df['type'] == 'discharge') & (battery_df['Capacity'].notna())]
+        battery_df = battery_df[battery_df['Capacity'].notna()]
         return battery_df.drop(['cycle', 'data', 'type'], axis=1) \
             .dropna(axis=1, how='all') \
             .reset_index(drop=True)
@@ -134,36 +135,47 @@ class SohNasaDatasetDataProcessor(DataProcessor):
         :return: Processed feature set X and target variable y.
         :rtype: tuple
         """
+        for col in ['Voltage_measured', 'Current_measured', 'Temperature_measured', 'Current_load', 'Voltage_load', 'Time']:
+            df[col] = df[col].transform(np.array)
 
-        for column_name in ['Voltage_measured', 'Current_measured', 'Temperature_measured', 'Current_load',
-                            'Voltage_load']:
-            SohNasaDatasetDataProcessor.__describe_nested_data(df, column_name)
+        df = df.drop('time', axis=1)
 
-        df['Time_max'] = df['Time'].apply(np.max)
-        df = df.drop(['Time', 'time'], axis=1).round(5)
+        def drop_empty_rows(df):
+            for col in df.columns:
+                df = df[df[col].apply(lambda x: not (isinstance(x, np.ndarray) and len(x) == 0))]
+            return df
 
-        # Preparing the target variable 'y' and feature set 'X'
+        # Izbacivanje redova koji sadrže prazne nizove
+        df = drop_empty_rows(df)
+
+        # Pronalaženje maksimalne dužine niza u kolonama koje sadrže nizove
+        max_len = max(
+            max(len(arr) if isinstance(arr, np.ndarray) else 1 for arr in df[col])
+            for col in df.columns
+        )
+
+        # Funkcija za popunjavanje nizova do maksimalne dužine
+        def interpolate_array(arr, max_len):
+            if isinstance(arr, np.ndarray):
+                x = np.linspace(0, 1, len(arr))
+                f = interp1d(x, arr, kind='linear', fill_value="extrapolate")
+                x_new = np.linspace(0, 1, max_len)
+                return f(x_new)
+            else:
+                return np.array([arr] * max_len)
+
         y = pd.to_numeric(df['Capacity'] / 2, errors='coerce').apply(lambda health: 1 if health >= 1 else health)
         X = df.drop(['Capacity'], axis=1).drop(y[y.isna()].index).dropna()
+
+        # Popunjavanje nizova u DataFrame-u
+        for col in X.columns:
+            X[col] = X[col].apply(lambda x: interpolate_array(x, max_len))
+
+        # Kombinovanje kolona u trodimenzionalni tensor
+        # Dimenzije će biti (num_samples, num_features, max_len)
+        X = np.stack([np.stack(X[col].values) for col in X.columns], axis=1)
+
+        # Preparing the target variable 'y' and feature set 'X'
         y = y.drop(y[y.isna()].index)
 
         return X, y
-
-    @staticmethod
-    def __describe_nested_data(df, column_name):
-        """
-        Helper method for preprocessing: computes statistical metrics for a given column in the DataFrame.
-
-        :param df: The DataFrame to process.
-        :type df: pd.DataFrame
-        :param column_name: The name of the column to compute statistics for.
-        :type column_name: str
-        """
-
-        df[f'{column_name}_max'] = df[column_name].apply(np.max)
-        df[f'{column_name}_min'] = df[column_name].apply(np.min)
-        df[f'{column_name}_avg'] = df[column_name].apply(np.average)
-        df[f'{column_name}_std'] = df[column_name].apply(np.std)
-        # Uncomment the following line if kurtosis is required
-        # df[f'{column_name}_kurt'] = df[column_name].apply(kurtosis)
-        df.drop([column_name], axis=1, inplace=True)

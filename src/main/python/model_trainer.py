@@ -1,9 +1,12 @@
 import time
+
+import pandas as pd
 from sklearn.model_selection import GridSearchCV, GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
+
 
 class ModelTrainer:
     """
@@ -52,13 +55,15 @@ class ModelTrainer:
         :return: A GridSearchCV object that has been fitted to the training data.
         :rtype: GridSearchCV
         """
-        groups = X_train['battery_filename']
+        groups = X_train['battery_filename'] if isinstance(X_train, pd.DataFrame) else X_train[:, 0, 0]
 
         # Creating a pipeline that includes preprocessing steps and the estimator
         pipeline = Pipeline([
             ('small_modifier',
-             FunctionTransformer(func=lambda x: x.drop(['battery_filename'], axis=1).astype(np.float64))),
-            ('scaler', StandardScaler()),
+             FunctionTransformer(
+                 func=lambda x: x.drop(['battery_filename'], axis=1) if isinstance(x, pd.DataFrame) else np.delete(x, 0,
+                                                                                                                   axis=1))),
+            # ('scaler', StandardScaler()),
             estimator_tuple
         ])
 

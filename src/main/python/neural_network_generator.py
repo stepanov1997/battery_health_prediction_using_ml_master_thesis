@@ -1,5 +1,6 @@
+from keras.src.layers import MaxPooling3D, Conv2D, MaxPooling2D
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Conv1D, MaxPooling1D, Flatten
+from tensorflow.keras.layers import Dense, LSTM, Conv3D, MaxPooling1D, Flatten
 
 
 class NeuralNetworkGenerator:
@@ -8,6 +9,7 @@ class NeuralNetworkGenerator:
     This class serves as a utility for generating Multi-Layer Perceptron (MLP), Long Short-Term Memory (LSTM),
     and Convolutional Neural Network (CNN) models, which can be used for various machine learning tasks.
     """
+
     @staticmethod
     def generate_mlp_model(input_shape):
         """
@@ -18,6 +20,7 @@ class NeuralNetworkGenerator:
         :return: A function that creates an MLP model when called with the specified parameters.
         :rtype: function
         """
+
         def model_function(optimizer='adam', neurons_layer_1=32, neurons_layer_2=16, activation='relu'):
             model = Sequential()
             model.add(Dense(neurons_layer_1, activation=activation, input_shape=(input_shape,)))
@@ -38,6 +41,7 @@ class NeuralNetworkGenerator:
         :return: A function that creates an LSTM model when called with the specified parameters.
         :rtype: function
         """
+
         def model_function(lstm_units=20, dense_units=10, activation='relu', optimizer='adam'):
             model = Sequential()
 
@@ -51,7 +55,7 @@ class NeuralNetworkGenerator:
         return model_function
 
     @staticmethod
-    def create_cnn_model(input_shape):
+    def create_cnn_model(input_shape, num_of_periods):
         """
         Generates a Convolutional Neural Network (CNN) model.
 
@@ -60,11 +64,13 @@ class NeuralNetworkGenerator:
         :return: A function that creates a CNN model when called with the specified parameters.
         :rtype: function
         """
-        def model_function(filters=32, kernel_size=3, dense_units=10, activation='relu', optimizer='adam'):
+
+        def model_function(filters=32, kernel_size=(3, 3), dense_units=10, activation='relu', optimizer='adam'):
             model = Sequential()
 
-            model.add(Conv1D(filters, kernel_size=kernel_size, activation=activation, input_shape=(input_shape, 1)))
-            model.add(MaxPooling1D(pool_size=2))
+            model.add(Conv2D(filters, kernel_size=kernel_size, activation=activation,
+                             input_shape=(input_shape, num_of_periods)))
+            model.add(MaxPooling3D(pool_size=3))
             model.add(Flatten())
             model.add(Dense(dense_units, activation=activation))
             model.add(Dense(1, activation='linear'))

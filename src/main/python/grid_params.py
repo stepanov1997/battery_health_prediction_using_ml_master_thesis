@@ -196,7 +196,7 @@ def load_estimators_data(input_shape):
         #     }
         # },
         {
-            'estimator': ('cnn-nn', KerasRegressor(model=NeuralNetworkGenerator.create_cnn_model(input_shape, 653))),
+            'estimator': ('cnn-nn', KerasRegressor(model=NeuralNetworkGenerator.create_cnn_model(input_shape))),
             'grid_param': {
                 # 'scaler__with_std': [True, False],
                 # 'cnn-nn__epochs': [50],

@@ -55,14 +55,16 @@ class ModelTrainer:
         :return: A GridSearchCV object that has been fitted to the training data.
         :rtype: GridSearchCV
         """
-        groups = X_train['battery_filename'] if isinstance(X_train, pd.DataFrame) else X_train[:, 0, 0]
+        groups = X_train['battery_filename'] if isinstance(X_train, pd.DataFrame) else X_train[:, 0, 0, 0]
+
+        def remove_filename(x):
+            return x.drop(['battery_filename'], axis=1) \
+                if isinstance(x, pd.DataFrame) \
+                else np.delete(x, 0, axis=1)
 
         # Creating a pipeline that includes preprocessing steps and the estimator
         pipeline = Pipeline([
-            ('small_modifier',
-             FunctionTransformer(
-                 func=lambda x: x.drop(['battery_filename'], axis=1) if isinstance(x, pd.DataFrame) else np.delete(x, 0,
-                                                                                                                   axis=1))),
+            ('small_modifier', FunctionTransformer(func=remove_filename)),
             # ('scaler', StandardScaler()),
             estimator_tuple
         ])
@@ -115,7 +117,8 @@ class ModelTrainer:
         :return: A tuple containing the compiled results, the name of the best model, the best model itself,
                  the best MSE, and the best R2 score. :rtype: tuple
         """
-        input_shape = X_train.shape[1] - 1
+        data_shape = X_train.shape
+        input_shape = (data_shape[0], data_shape[1] - 1, data_shape[2], data_shape[3])
         estimators_data = self.estimators_data_retriever(input_shape)
 
         best_global_estimator_name = None

@@ -173,7 +173,9 @@ class SohNasaDatasetDataProcessor(DataProcessor):
 
         # Kombinovanje kolona u trodimenzionalni tensor
         # Dimenzije će biti (num_samples, num_features, max_len)
-        X = np.stack([np.stack(X[col].values) for col in X.columns], axis=1)
+        X = np.stack([np.stack(X[col].values, dtype=object) for col in X.columns], axis=1, dtype=object)
+
+        X = np.expand_dims(X, axis=-1)
 
         # Preparing the target variable 'y' and feature set 'X'
         y = y.drop(y[y.isna()].index)

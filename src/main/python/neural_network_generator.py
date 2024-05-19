@@ -1,6 +1,6 @@
 from keras.src.layers import MaxPooling3D, Conv2D, MaxPooling2D
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Conv3D, MaxPooling1D, Flatten
+from tensorflow.keras.layers import Dense, LSTM, Conv3D, MaxPooling1D, Flatten, Input
 
 
 class NeuralNetworkGenerator:
@@ -55,7 +55,7 @@ class NeuralNetworkGenerator:
         return model_function
 
     @staticmethod
-    def create_cnn_model(input_shape, num_of_periods):
+    def create_cnn_model(input_shape):
         """
         Generates a Convolutional Neural Network (CNN) model.
 
@@ -68,14 +68,16 @@ class NeuralNetworkGenerator:
         def model_function(filters=32, kernel_size=(3, 3), dense_units=10, activation='relu', optimizer='adam'):
             model = Sequential()
 
-            model.add(Conv2D(filters, kernel_size=kernel_size, activation=activation,
-                             input_shape=(input_shape, num_of_periods)))
-            model.add(MaxPooling3D(pool_size=3))
+            model.add(Input(shape=input_shape))
+            model.add(Conv2D(filters, kernel_size=kernel_size, activation=activation))
+            model.add(MaxPooling2D(strides=2))
             model.add(Flatten())
             model.add(Dense(dense_units, activation=activation))
             model.add(Dense(1, activation='linear'))
 
             model.compile(optimizer=optimizer, loss='mean_squared_error')
+
+            model.summary()
             return model
 
         return model_function

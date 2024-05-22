@@ -65,7 +65,7 @@ class ModelTrainer:
         # Creating a pipeline that includes preprocessing steps and the estimator
         pipeline = Pipeline([
             ('small_modifier', FunctionTransformer(func=remove_filename)),
-            # ('scaler', StandardScaler()),
+            ('scaler', StandardScaler()),
             estimator_tuple
         ])
 
@@ -118,7 +118,7 @@ class ModelTrainer:
                  the best MSE, and the best R2 score. :rtype: tuple
         """
         data_shape = X_train.shape
-        input_shape = (data_shape[0], data_shape[1] - 1, data_shape[2], data_shape[3])
+        input_shape = (data_shape[1] - 1, data_shape[2], data_shape[3])
         estimators_data = self.estimators_data_retriever(input_shape)
 
         best_global_estimator_name = None

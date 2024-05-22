@@ -198,24 +198,24 @@ def load_estimators_data(input_shape):
         {
             'estimator': ('cnn-nn', KerasRegressor(model=NeuralNetworkGenerator.create_cnn_model(input_shape))),
             'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'cnn-nn__epochs': [50],
-                # 'cnn-nn__batch_size': [128],
-                # 'cnn-nn__model__filters': [32, 64, 128],
-                # 'cnn-nn__model__kernel_size': [2, 3, 5],
-                # 'cnn-nn__model__dense_units': [10, 20, 50],
-                # 'cnn-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
-                # 'cnn-nn__model__optimizer': ['rmsprop', 'adam']
+                'scaler__with_std': [True, False],
+                'cnn-nn__epochs': [50],
+                'cnn-nn__batch_size': [128],
+                'cnn-nn__model__filters': [32, 64, 128],
+                'cnn-nn__model__kernel_size': [2, 3, 5],
+                'cnn-nn__model__dense_units': [10, 20, 50],
+                'cnn-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
+                'cnn-nn__model__optimizer': ['rmsprop', 'adam']
 
                 # Best results
                 # "scaler__with_std": [False],
-                "cnn-nn__epochs": [50],
-                "cnn-nn__batch_size": [128],
-                "cnn-nn__model__filters": [128],
-                "cnn-nn__model__kernel_size": [(3, 3)],
-                "cnn-nn__model__dense_units": [10],
-                "cnn-nn__model__activation": ["tanh"],
-                "cnn-nn__model__optimizer": ["adam"],
+                # "cnn-nn__epochs": [50],
+                # "cnn-nn__batch_size": [128],
+                # "cnn-nn__model__filters": [128],
+                # "cnn-nn__model__kernel_size": [(3, 3)],
+                # "cnn-nn__model__dense_units": [10],
+                # "cnn-nn__model__activation": ["tanh"],
+                # "cnn-nn__model__optimizer": ["adam"],
             }
         }
     ]

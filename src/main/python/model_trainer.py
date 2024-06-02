@@ -1,11 +1,12 @@
 import time
 
+import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
-from sklearn.metrics import mean_squared_error, r2_score
-import numpy as np
 
 
 class ModelTrainer:
@@ -65,7 +66,7 @@ class ModelTrainer:
         # Creating a pipeline that includes preprocessing steps and the estimator
         pipeline = Pipeline([
             ('small_modifier', FunctionTransformer(func=remove_filename)),
-            ('scaler', StandardScaler()),
+            ('scaler', NDScaler()),
             estimator_tuple
         ])
 
@@ -164,3 +165,44 @@ class ModelTrainer:
                 best_global_estimator = best_local_estimator
 
         return results, best_global_estimator_name, best_global_estimator, best_global_mse, best_global_r2
+
+
+class NDScaler(BaseEstimator, TransformerMixin):
+    def __init__(self, **scaler_params):
+        self.scaler_params = scaler_params
+        if scaler_params:
+            self.scaler = StandardScaler(**scaler_params)
+        else:
+            self.scaler = StandardScaler()
+        self.original_shape = None
+
+    def fit(self, X, y=None):
+        # Reshape the ND input to 2D
+        self.original_shape = X.shape
+        X_reshaped = X.reshape(X.shape[0], -1)
+        self.scaler.fit(X_reshaped, y)
+        return self
+
+    def transform(self, X):
+        # Reshape the ND input to 2D
+        X_reshaped = X.reshape(X.shape[0], -1)
+        # Apply the scaler
+        X_scaled = self.scaler.transform(X_reshaped)
+        # Reshape back to ND
+        X_scaled_reshaped = X_scaled.reshape(self.original_shape)
+        print(self.original_shape)
+        print(X_scaled_reshaped.shape)
+        return X_scaled_reshaped
+
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X)
+
+    def get_params(self, deep=True):
+        # Return parameters for this estimator
+        return self.scaler.get_params(deep)
+
+    def set_params(self, **params):
+        # Extract scaler-specific parameters
+        self.scaler.set_params(**params)
+        return self

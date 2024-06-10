@@ -174,29 +174,28 @@ class NDScaler(BaseEstimator, TransformerMixin):
             self.scaler = StandardScaler(**scaler_params)
         else:
             self.scaler = StandardScaler()
-        self.original_shape = None
 
     def fit(self, X, y=None):
         # Reshape the ND input to 2D
-        self.original_shape = X.shape
-        print(f"Original shape during fit: {self.original_shape}")
+        print(f"Original shape during fit: {X.shape}")
         X_reshaped = X.reshape(X.shape[0], -1)
         self.scaler.fit(X_reshaped, y)
         return self
 
     def transform(self, X):
+        original_shape = X.shape
         # Reshape the ND input to 2D
-        print(f"Original shape during transform: {self.original_shape}")
+        print(f"Original shape during transform: {original_shape}")
         X_reshaped = X.reshape(X.shape[0], -1)
         # Apply the scaler
         X_scaled = self.scaler.transform(X_reshaped)
 
         # Verify number of elements
-        if X_scaled.size != np.prod(self.original_shape):
-            raise ValueError(f"Cannot reshape array of size {X_scaled.size} into shape {self.original_shape}")
+        if X_scaled.size != np.prod(original_shape):
+            raise ValueError(f"Cannot reshape array of size {X_scaled.size} into shape {original_shape}")
 
         # Reshape back to ND
-        X_scaled_reshaped = X_scaled.reshape(self.original_shape)
+        X_scaled_reshaped = X_scaled.reshape(original_shape)
         print(f"Shape after scaling and reshaping: {X_scaled_reshaped.shape}")
         return X_scaled_reshaped
 

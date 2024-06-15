@@ -227,11 +227,11 @@ def load_estimators_data(input_shape):
                 input_shape, 5
             ))),
             'grid_param': {
-                'scaler__with_std': [True, False],
-                'mlp-class-nn__epochs': [50, 100],
+                'scaler__with_std': [True],
+                'mlp-class-nn__epochs': [100],
                 'mlp-class-nn__batch_size': [128],
-                'mlp-class-nn__model__neurons_layer_1': [20, 30, 40],
-                'mlp-class-nn__model__neurons_layer_3': [10, 20, 30],
+                'mlp-class-nn__model__neurons_layer_1': [40],
+                'mlp-class-nn__model__neurons_layer_3': [30],
                 'mlp-class-nn__model__activation': ['softmax'],
                 'mlp-class-nn__model__loss': ['categorical_crossentropy'],
                 'mlp-class-nn__model__optimizer': ['rmsprop', 'adam'],
@@ -252,8 +252,8 @@ def load_estimators_data(input_shape):
                 input_shape,  5
             ))),
             'grid_param': {
-                'scaler__with_std': [True, False],
-                'cnn-class-nn__epochs': [50, 100],
+                'scaler__with_std': [True],
+                'cnn-class-nn__epochs': [100],
                 'cnn-class-nn__batch_size': [128],
                 'cnn-class-nn__model__dense_units': [10, 20, 30],
                 'cnn-class-nn__model__activation': ['softmax'],

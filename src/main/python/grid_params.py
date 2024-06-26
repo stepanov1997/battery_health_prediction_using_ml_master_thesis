@@ -1,8 +1,9 @@
 import os
 
+from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from catboost import CatBoostRegressor, CatBoost
+from catboost import CatBoostRegressor, CatBoost, CatBoostClassifier
 from xgboost import XGBRegressor
 import xgboost as xgb
 from sklearn.svm import SVR
@@ -92,45 +93,45 @@ def load_estimators_data(input_shape):
         #         # "random_forest__bootstrap": [True],
         #     }
         # },
-        # {
-        #     'estimator': ('catboost', CatBoost()),
-        #     'grid_param': {
-        #         'scaler__with_std': [True, False],
-        #         'catboost__depth': [4, 5, 6],
-        #         'catboost__learning_rate': [0.01, 0.1, 0.2],
-        #         'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
-        #         'catboost__min_child_samples': [100, 200, 300],
-        #         'catboost__subsample': [0.5, 0.75, 1],
-        #         'catboost__colsample_bylevel': [0.5, 0.75, 1],
-        #         'catboost__loss_function': ["RMSE", "MAE", "Quantile:alpha=0.5"],
-        #         'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
-        #         'catboost__eval_metric': ["RMSE", "MAE", "R2"]
-        #
-        #         # # Best results (NASA-SOH)
-        #         # "scaler__with_std": [False],
-        #         # "catboost__depth": [4],
-        #         # "catboost__learning_rate": [0.1],
-        #         # "catboost__l2_leaf_reg": [0.1],
-        #         # "catboost__min_child_samples": [100],
-        #         # "catboost__subsample": [0.75],
-        #         # "catboost__colsample_bylevel": [0.75],
-        #         # "catboost__loss_function": ["RMSE"],
-        #         # "catboost__bootstrap_type": ["Bernoulli"],
-        #         # "catboost__eval_metric": ["RMSE"],
-        #
-        #         # Best results (TOYOTA-SOH)
-        #         # "catboost__bootstrap_type": ["MVS"],
-        #         # "catboost__colsample_bylevel": [0.75],
-        #         # "catboost__depth": [4],
-        #         # "catboost__eval_metric": ["RMSE"],
-        #         # "catboost__l2_leaf_reg": [0.2],
-        #         # "catboost__learning_rate": [0.2],
-        #         # "catboost__loss_function": ["RMSE"],
-        #         # "catboost__min_child_samples": [100],
-        #         # "catboost__subsample": [0.5],
-        #         # "scaler__with_std": [False]
-        #     }
-        # },
+        {
+            'estimator': ('catboost', CatBoostClassifier()),
+            'grid_param': {
+                'scaler__with_std': [True, False],
+                'catboost__depth': [4, 5, 6],
+                'catboost__learning_rate': [0.01, 0.1, 0.2],
+                'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
+                'catboost__min_child_samples': [100, 200, 300],
+                'catboost__subsample': [0.5, 0.75, 1],
+                'catboost__colsample_bylevel': [0.5, 0.75, 1],
+                'catboost__loss_function': ["Logloss", "MultiClass", "Accuracy"],
+                'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
+                'catboost__eval_metric': ["Logloss", "MultiClass", "Accuracy", "AUC"]
+
+                # # Best results (NASA-SOH)
+                # "scaler__with_std": [False],
+                # "catboost__depth": [4],
+                # "catboost__learning_rate": [0.1],
+                # "catboost__l2_leaf_reg": [0.1],
+                # "catboost__min_child_samples": [100],
+                # "catboost__subsample": [0.75],
+                # "catboost__colsample_bylevel": [0.75],
+                # "catboost__loss_function": ["RMSE"],
+                # "catboost__bootstrap_type": ["Bernoulli"],
+                # "catboost__eval_metric": ["RMSE"],
+
+                # Best results (TOYOTA-SOH)
+                # "catboost__bootstrap_type": ["MVS"],
+                # "catboost__colsample_bylevel": [0.75],
+                # "catboost__depth": [4],
+                # "catboost__eval_metric": ["RMSE"],
+                # "catboost__l2_leaf_reg": [0.2],
+                # "catboost__learning_rate": [0.2],
+                # "catboost__loss_function": ["RMSE"],
+                # "catboost__min_child_samples": [100],
+                # "catboost__subsample": [0.5],
+                # "scaler__with_std": [False]
+            }
+        },
         # {
         #     'estimator': ('xgboost', xgb.XGBClassifier(n_jobs=-1)),
         #     'grid_param': {
@@ -173,12 +174,12 @@ def load_estimators_data(input_shape):
         # {
         #     'estimator': ('svm', SVC()),
         #     'grid_param': {
-        #         'scaler__with_std': [True, False],
-        #         'svm__C': [0.1, 1.0, 10.0],
-        #         'svm__kernel': ['linear', 'poly'],
-        #         'svm__gamma': ['scale', 'auto', 0.1, 1, 10],
-        #         'svm__degree': [1, 3, 5],
-        #         'svm__coef0': [0.0, 0.1, 0.5]
+        #         'scaler__with_std': [False],
+        #         'svm__C': [10.0],
+        #         'svm__kernel': ['rbf'],
+        #         'svm__gamma': ['scale'],
+        #         'svm__degree': [1],
+        #         'svm__coef0': [0.1]
         #
         #         # Best results
         #         # 'scaler__with_std': [False],
@@ -222,54 +223,54 @@ def load_estimators_data(input_shape):
         #     }
         # },
         #Transfer learning (MLP)
-        {
-            'estimator': ('mlp-class-nn', KerasClassifier(model=NeuralNetworkGenerator.generate_mlp_classification_model(
-                input_shape, 5
-            ))),
-            'grid_param': {
-                'scaler__with_std': [True],
-                'mlp-class-nn__epochs': [100],
-                'mlp-class-nn__batch_size': [128],
-                'mlp-class-nn__model__neurons_layer_1': [40],
-                'mlp-class-nn__model__neurons_layer_3': [30],
-                'mlp-class-nn__model__activation': ['softmax'],
-                'mlp-class-nn__model__loss': ['categorical_crossentropy'],
-                'mlp-class-nn__model__optimizer': ['rmsprop', 'adam'],
-
-                # Best results (Toyota-RUL)
-                # "mlp-tl-nn__batch_size": [128],
-                # "mlp-tl-nn__epochs": [50],
-                # "mlp-tl-nn__model__activation": ["softmax"],
-                # "mlp-tl-nn__model__loss": ['categorical_crossentropy'],
-                # "mlp-tl-nn__model__neurons_layer_3": [10],
-                # "mlp-tl-nn__model__optimizer": ["rmsprop"],
-                # "scaler__with_std": [True]
-            }
-        },
-        # Transfer learning (CNN)
-        {
-            'estimator': ('cnn-class-nn', KerasClassifier(model=NeuralNetworkGenerator.create_cnn_classification_model(
-                input_shape,  5
-            ))),
-            'grid_param': {
-                'scaler__with_std': [True],
-                'cnn-class-nn__epochs': [100],
-                'cnn-class-nn__batch_size': [128],
-                'cnn-class-nn__model__dense_units': [10, 20, 30],
-                'cnn-class-nn__model__activation': ['softmax'],
-                'cnn-class-nn__model__loss': ['categorical_crossentropy'],
-                'cnn-class-nn__model__optimizer': ['rmsprop', 'adam']
-
-                # Best results (Toyota-RUL)
-                # "cnn-tl-nn__batch_size": [128],
-                # "cnn-tl-nn__epochs": [50],
-                # "cnn-tl-nn__model__activation": ["softmax"],
-                # "cnn-tl-nn__model__loss": ['categorical_crossentropy'],
-                # "cnn-tl-nn__model__neurons_layer_3": [10],
-                # "cnn-tl-nn__model__optimizer": ["rmsprop"],
-                # "scaler__with_std": [True]
-            }
-        },
+        # {
+        #     'estimator': ('mlp-class-nn', KerasClassifier(model=NeuralNetworkGenerator.generate_mlp_classification_model(
+        #         input_shape, 5
+        #     ))),
+        #     'grid_param': {
+        #         'scaler__with_std': [True],
+        #         'mlp-class-nn__epochs': [100],
+        #         'mlp-class-nn__batch_size': [128],
+        #         'mlp-class-nn__model__neurons_layer_1': [40],
+        #         'mlp-class-nn__model__neurons_layer_3': [30],
+        #         'mlp-class-nn__model__activation': ['softmax'],
+        #         'mlp-class-nn__model__loss': ['categorical_crossentropy'],
+        #         'mlp-class-nn__model__optimizer': ['rmsprop', 'adam'],
+        #
+        #         # Best results (Toyota-RUL)
+        #         # "mlp-tl-nn__batch_size": [128],
+        #         # "mlp-tl-nn__epochs": [50],
+        #         # "mlp-tl-nn__model__activation": ["softmax"],
+        #         # "mlp-tl-nn__model__loss": ['categorical_crossentropy'],
+        #         # "mlp-tl-nn__model__neurons_layer_3": [10],
+        #         # "mlp-tl-nn__model__optimizer": ["rmsprop"],
+        #         # "scaler__with_std": [True]
+        #     }
+        # },
+        # # Transfer learning (CNN)
+        # {
+        #     'estimator': ('cnn-class-nn', KerasClassifier(model=NeuralNetworkGenerator.create_cnn_classification_model(
+        #         input_shape,  5
+        #     ))),
+        #     'grid_param': {
+        #         'scaler__with_std': [True],
+        #         'cnn-class-nn__epochs': [100],
+        #         'cnn-class-nn__batch_size': [128],
+        #         'cnn-class-nn__model__dense_units': [10, 20, 30],
+        #         'cnn-class-nn__model__activation': ['softmax'],
+        #         'cnn-class-nn__model__loss': ['categorical_crossentropy'],
+        #         'cnn-class-nn__model__optimizer': ['rmsprop', 'adam']
+        #
+        #         # Best results (Toyota-RUL)
+        #         # "cnn-tl-nn__batch_size": [128],
+        #         # "cnn-tl-nn__epochs": [50],
+        #         # "cnn-tl-nn__model__activation": ["softmax"],
+        #         # "cnn-tl-nn__model__loss": ['categorical_crossentropy'],
+        #         # "cnn-tl-nn__model__neurons_layer_3": [10],
+        #         # "cnn-tl-nn__model__optimizer": ["rmsprop"],
+        #         # "scaler__with_std": [True]
+        #     }
+        # },
         # {
         #     'estimator': ('lstm-nn', KerasRegressor(model=NeuralNetworkGenerator.generate_lstm_model(input_shape))),
         #     'grid_param': {

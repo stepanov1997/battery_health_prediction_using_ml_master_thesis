@@ -145,12 +145,12 @@ class ModelTrainer:
         # Iterating through each estimator and its grid parameters to train and evaluate models
         estimators = [(estimator_dict['estimator'], estimator_dict['grid_param']) for estimator_dict in estimators_data]
         for estimator, grid_param in estimators:
-            if isinstance(estimator[1], ClassifierMixin):
+            # if isinstance(estimator[1], ClassifierMixin):
                 self.process_classification_results(estimator, X_train, y_train, X_test, y_test, grid_param, results,
                                                     train_folder)
-            elif isinstance(estimator[1], RegressorMixin):
-                self.process_regression_results(estimator, X_train, y_train, X_test, y_test, grid_param, results,
-                                                train_folder)
+            # elif isinstance(estimator[1], RegressorMixin):
+            #     self.process_regression_results(estimator, X_train, y_train, X_test, y_test, grid_param, results,
+            #                                     train_folder)
 
         return results
 

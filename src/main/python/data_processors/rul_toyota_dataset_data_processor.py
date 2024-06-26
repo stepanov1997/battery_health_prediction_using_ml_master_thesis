@@ -46,8 +46,8 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
         preprocessing_pipeline = Pipeline([
             ('read_and_parse_files', FunctionTransformer(func=self.read_and_parse_multiple_files)),
             ('prefit_preprocessing', FunctionTransformer(func=self.__preprocess_data_before_fitting)),
-            ('label_encoder', LabelEncoderPipelineFriendly(categories=['expired', 'short_lifespan', 'medium_lifespan',
-                                                                       'long_lifespan', 'very_long_lifespan']))
+            # ('label_encoder', LabelEncoderPipelineFriendly(categories=['expired', 'short_lifespan', 'medium_lifespan',
+            #                                                            'long_lifespan', 'very_long_lifespan']))
         ])
 
         # Apply the pipeline to both training and test data
@@ -204,6 +204,10 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
 
         X = df.drop(columns=['RUL'])
         y = df['RUL']
+
+
+        label_encoder = LabelEncoder()
+        y = label_encoder.fit_transform(y)
 
         return X, y
 

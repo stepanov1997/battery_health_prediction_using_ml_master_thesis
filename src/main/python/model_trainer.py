@@ -95,20 +95,25 @@ class ModelTrainer:
         y_pred = grid_search.predict(X_test)
 
         if classification_or_regression == 'classification':
-            accuracy = accuracy_score(y_test, y_pred)
-            f1 = f1_score(y_test, y_pred, average='macro')
-            precision = precision_score(y_test, y_pred, average='macro')
-            recall = recall_score(y_test, y_pred, average='macro')
+            accuracy = None
+            f1 = None
+            precision = None
+            recall = None
             roc_auc = None
+            conf_matrix_dict = None
             try:
+                accuracy = accuracy_score(y_test, y_pred)
+                f1 = f1_score(y_test, y_pred, average='macro')
+                precision = precision_score(y_test, y_pred, average='macro')
+                recall = recall_score(y_test, y_pred, average='macro')
                 roc_auc = roc_auc_score(y_test, y_pred, average='macro', multi_class='ovo')
+                conf_matrix = multilabel_confusion_matrix(y_test, y_pred)
+                conf_matrix_dict = {
+                    elem: conf_matrix[index].tolist() for index, elem in
+                    enumerate(['expired', 'short_lifespan', 'medium_lifespan', 'long_lifespan', 'very_long_lifespan'])
+                }
             except ValueError as ex:
                 print(str(ex))
-            conf_matrix = multilabel_confusion_matrix(y_test, y_pred)
-            conf_matrix_dict = {
-                elem: conf_matrix[index].tolist() for index, elem in
-                enumerate(['expired', 'short_lifespan', 'medium_lifespan', 'long_lifespan', 'very_long_lifespan'])
-            }
             return accuracy, f1, precision, recall, roc_auc, conf_matrix_dict
         elif classification_or_regression == 'regression':
             mse = round(mean_squared_error(y_test, y_pred), 8)

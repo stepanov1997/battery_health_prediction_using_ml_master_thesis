@@ -131,45 +131,45 @@ def load_estimators_data(input_shape):
         #         # "scaler__with_std": [False]
         #     }
         # },
-        # {
-        #     'estimator': ('xgboost', xgb.XGBClassifier(n_jobs=-1)),
-        #     'grid_param': {
-        #         'scaler__with_std': [True, False],
-        #         'xgboost__n_estimators': [50, 100, 300],
-        #         'xgboost__max_depth': [4, 5, 6],
-        #         'xgboost__learning_rate': [0.01, 0.1, 0.2],
-        #         'xgboost__min_child_weight': [1, 2, 3],
-        #         'xgboost__gamma': [0, 0.1, 0.2, 0.3],
-        #         'xgboost__subsample': [0.5, 0.75, 1],
-        #         'xgboost__colsample_bytree': [0.5, 0.75, 1],
-        #         'xgboost__reg_alpha': [0, 0.1, 0.5],
-        #         'xgboost__reg_lambda': [0, 0.1, 0.5]
-        #
-        #         # # Best results (NASA-SOH)
-        #         # "scaler__with_std": [True],
-        #         # "xgboost__n_estimators": [300],
-        #         # "xgboost__max_depth": [6],
-        #         # "xgboost__learning_rate": [0.1],
-        #         # "xgboost__min_child_weight": [2],
-        #         # "xgboost__gamma": [0],
-        #         # "xgboost__subsample": [0.75],
-        #         # "xgboost__colsample_bytree": [0.5],
-        #         # "xgboost__reg_alpha": [0],
-        #         # "xgboost__reg_lambda": [0.5],
-        #
-        #         # Best results (Toyota-SOH)
-        #         # "scaler__with_std": [True],
-        #         # "xgboost__colsample_bytree": [1],
-        #         # "xgboost__gamma": [0],
-        #         # "xgboost__learning_rate": [0.1],
-        #         # "xgboost__max_depth": [4],
-        #         # "xgboost__min_child_weight": [1],
-        #         # "xgboost__n_estimators": [100],
-        #         # "xgboost__reg_alpha": [0.1],
-        #         # "xgboost__reg_lambda": [0.5],
-        #         # "xgboost__subsample": [1]
-        #     }
-        # },
+        {
+            'estimator': ('xgboost', xgb.XGBClassifier(n_jobs=-1)),
+            'grid_param': {
+                'scaler__with_std': [True, False],
+                'xgboost__n_estimators': [50, 100, 300],
+                'xgboost__max_depth': [4, 5, 6],
+                'xgboost__learning_rate': [0.01, 0.1, 0.2],
+                'xgboost__min_child_weight': [1, 2, 3],
+                'xgboost__gamma': [0, 0.1, 0.2, 0.3],
+                'xgboost__subsample': [0.5, 0.75, 1],
+                'xgboost__colsample_bytree': [0.5, 0.75, 1],
+                'xgboost__reg_alpha': [0, 0.1, 0.5],
+                'xgboost__reg_lambda': [0, 0.1, 0.5]
+
+                # # Best results (NASA-SOH)
+                # "scaler__with_std": [True],
+                # "xgboost__n_estimators": [300],
+                # "xgboost__max_depth": [6],
+                # "xgboost__learning_rate": [0.1],
+                # "xgboost__min_child_weight": [2],
+                # "xgboost__gamma": [0],
+                # "xgboost__subsample": [0.75],
+                # "xgboost__colsample_bytree": [0.5],
+                # "xgboost__reg_alpha": [0],
+                # "xgboost__reg_lambda": [0.5],
+
+                # Best results (Toyota-SOH)
+                # "scaler__with_std": [True],
+                # "xgboost__colsample_bytree": [1],
+                # "xgboost__gamma": [0],
+                # "xgboost__learning_rate": [0.1],
+                # "xgboost__max_depth": [4],
+                # "xgboost__min_child_weight": [1],
+                # "xgboost__n_estimators": [100],
+                # "xgboost__reg_alpha": [0.1],
+                # "xgboost__reg_lambda": [0.5],
+                # "xgboost__subsample": [1]
+            }
+        },
         # {
         #     'estimator': ('svm', SVC()),
         #     'grid_param': {

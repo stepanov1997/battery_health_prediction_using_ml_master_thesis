@@ -187,6 +187,8 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
 
         df.reset_index(drop=True, inplace=True)
 
+        df = df[df['cycle_index'] < 51]
+
         df = df.drop(columns=['discharge_capacity', 'battery_index', 'cycle_index'])
 
         def classify_rul(rul):

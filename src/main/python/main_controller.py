@@ -1,6 +1,9 @@
 import os
 from typing import Dict
 
+import numpy as np
+import pandas as pd
+
 from data_processors.data_processor import DataProcessor
 from model_trainer import ModelTrainer
 from results_processor import ResultsProcessor
@@ -16,6 +19,72 @@ NASA_DATASET_DIR = "NASA dataset"
 PANASONIC_DATASET_DIR = "Panasonic 18650PF Data"
 TOYOTA_DATASET_DIR = "Toyota"
 NASA_RANDOMIZED_DATASET_DIR = "NASA randomized dataset"
+
+
+def add_interpolated_rows(train_df, target_series, percentage=0.3):
+    # Create copies of the dataframe and series to avoid modifying the originals
+    new_train_df = train_df.copy()
+    new_target_series = target_series.copy()
+
+    # Ensure the 'battery_filename' column is treated as a string
+    new_train_df['battery_filename'] = new_train_df['battery_filename'].astype(str)
+
+    # Function to insert NaN rows for each group and interpolate values
+    def insert_nans_and_interpolate(group, target_group):
+        # Calculate the number of new rows to insert based on the percentage
+        num_new_rows = int(len(group) * percentage)
+        if num_new_rows == 0:
+            return group, target_group
+
+        # Generate random indices where new rows will be inserted
+        random_indices = np.random.choice(len(group), size=num_new_rows, replace=False)
+        random_indices.sort()
+
+        # Create a new dataframe with NaN rows inserted
+        expanded_indices = np.arange(len(group) + num_new_rows)
+        new_group = pd.DataFrame(np.nan, index=expanded_indices, columns=group.columns)
+        new_target_group = pd.Series(np.nan, index=expanded_indices)
+
+        # Populate the new dataframe with the original data and NaN rows
+        current_idx = 0
+        for i in expanded_indices:
+            if current_idx in random_indices:
+                current_idx += 1
+            if current_idx < len(group):
+                new_group.iloc[i] = group.iloc[current_idx]
+                new_target_group.iloc[i] = target_group.iloc[current_idx]
+                current_idx += 1
+
+        # Interpolate values for numeric columns, except 'battery_filename'
+        numeric_columns = new_group.select_dtypes(include=[np.number]).columns
+        new_group[numeric_columns] = new_group[numeric_columns].interpolate(method='linear')
+
+        # Fill forward and backward for 'battery_filename' column
+        new_group['battery_filename'] = new_group['battery_filename'].ffill().bfill()
+
+        # Interpolate the target series
+        new_target_group = new_target_group.interpolate(method='linear')
+
+        return new_group, new_target_group
+
+    # Group by 'battery_filename' and apply NaN insertion and interpolation
+    grouped = new_train_df.groupby('battery_filename')
+    interpolated_train_df_list = []
+    interpolated_target_series_list = []
+
+    for name, group in grouped:
+        # Extract the target group corresponding to the current group
+        target_group = new_target_series[group.index]
+        # Insert NaNs and interpolate the current group and its target
+        interpolated_group, interpolated_target_group = insert_nans_and_interpolate(group, target_group)
+        interpolated_train_df_list.append(interpolated_group)
+        interpolated_target_series_list.append(interpolated_target_group)
+
+    # Concatenate all interpolated groups into a single dataframe and series
+    new_train_df = pd.concat(interpolated_train_df_list).reset_index(drop=True)
+    new_target_series = pd.concat(interpolated_target_series_list).reset_index(drop=True)
+
+    return new_train_df, new_target_series
 
 
 class MainController:
@@ -75,6 +144,8 @@ class MainController:
 
             # Preprocessing the data and splitting it into training and testing sets
             preprocessing_pipeline, X_train, y_train, X_test, y_test = data_processor.preprocess_data()
+
+            X_train, y_train = add_interpolated_rows(X_train, y_train, 0.3)
 
             # Saving the preprocessing pipeline for future use, ensuring consistency in data processing
             self.serialization_util.save_preprocessor(results_directory, preprocessing_pipeline)

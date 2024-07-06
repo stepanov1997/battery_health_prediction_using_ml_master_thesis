@@ -80,16 +80,16 @@ def load_estimators_data(input_shape):
         {
             'estimator': ('catboost', CatBoostRegressor()),
             'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'catboost__depth': [4, 5, 6],
-                # 'catboost__learning_rate': [0.01, 0.1, 0.2],
-                # 'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
-                # 'catboost__min_child_samples': [100, 200, 300],
-                # 'catboost__subsample': [0.5, 0.75, 1],
-                # 'catboost__colsample_bylevel': [0.5, 0.75, 1],
-                # 'catboost__loss_function': ["RMSE", "MAE", "Quantile:alpha=0.5"],
-                # 'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
-                # 'catboost__eval_metric': ["RMSE", "MAE", "R2"]
+                'scaler__with_std': [True, False],
+                'catboost__depth': [4, 5, 6],
+                'catboost__learning_rate': [0.01, 0.1, 0.2],
+                'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
+                'catboost__min_child_samples': [100, 200, 300],
+                'catboost__subsample': [0.5, 0.75, 1],
+                'catboost__colsample_bylevel': [0.5, 0.75, 1],
+                'catboost__loss_function': ["RMSE", "MAE", "Quantile:alpha=0.5"],
+                'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
+                'catboost__eval_metric': ["RMSE", "MAE", "R2"]
 
                 # # Best results (NASA-SOH)
                 # "scaler__with_std": [False],
@@ -104,31 +104,31 @@ def load_estimators_data(input_shape):
                 # "catboost__eval_metric": ["RMSE"],
 
                 # Best results (TOYOTA-SOH)
-                "catboost__bootstrap_type": ["MVS"],
-                "catboost__colsample_bylevel": [0.75],
-                "catboost__depth": [4],
-                "catboost__eval_metric": ["RMSE"],
-                "catboost__l2_leaf_reg": [0.2],
-                "catboost__learning_rate": [0.2],
-                "catboost__loss_function": ["RMSE"],
-                "catboost__min_child_samples": [100],
-                "catboost__subsample": [0.5],
-                "scaler__with_std": [False]
+                # "catboost__bootstrap_type": ["MVS"],
+                # "catboost__colsample_bylevel": [0.75],
+                # "catboost__depth": [4],
+                # "catboost__eval_metric": ["RMSE"],
+                # "catboost__l2_leaf_reg": [0.2],
+                # "catboost__learning_rate": [0.2],
+                # "catboost__loss_function": ["RMSE"],
+                # "catboost__min_child_samples": [100],
+                # "catboost__subsample": [0.5],
+                # "scaler__with_std": [False]
             }
         },
         {
             'estimator': ('xgboost', XGBRegressor(n_jobs=-1)),
             'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'xgboost__n_estimators': [50, 100, 300],
-                # 'xgboost__max_depth': [4, 5, 6],
-                # 'xgboost__learning_rate': [0.01, 0.1, 0.2],
-                # 'xgboost__min_child_weight': [1, 2, 3],
-                # 'xgboost__gamma': [0, 0.1, 0.2, 0.3],
-                # 'xgboost__subsample': [0.5, 0.75, 1],
-                # 'xgboost__colsample_bytree': [0.5, 0.75, 1],
-                # 'xgboost__reg_alpha': [0, 0.1, 0.5],
-                # 'xgboost__reg_lambda': [0, 0.1, 0.5]
+                'scaler__with_std': [True, False],
+                'xgboost__n_estimators': [50, 100, 300],
+                'xgboost__max_depth': [4, 5, 6],
+                'xgboost__learning_rate': [0.01, 0.1, 0.2],
+                'xgboost__min_child_weight': [1, 2, 3],
+                'xgboost__gamma': [0, 0.1, 0.2, 0.3],
+                'xgboost__subsample': [0.5, 0.75, 1],
+                'xgboost__colsample_bytree': [0.5, 0.75, 1],
+                'xgboost__reg_alpha': [0, 0.1, 0.5],
+                'xgboost__reg_lambda': [0, 0.1, 0.5]
 
                 # # Best results (NASA-SOH)
                 # "scaler__with_std": [True],
@@ -143,16 +143,16 @@ def load_estimators_data(input_shape):
                 # "xgboost__reg_lambda": [0.5],
 
                 # Best results (Toyota-SOH)
-                "scaler__with_std": [True],
-                "xgboost__colsample_bytree": [1],
-                "xgboost__gamma": [0],
-                "xgboost__learning_rate": [0.1],
-                "xgboost__max_depth": [4],
-                "xgboost__min_child_weight": [1],
-                "xgboost__n_estimators": [100],
-                "xgboost__reg_alpha": [0.1],
-                "xgboost__reg_lambda": [0.5],
-                "xgboost__subsample": [1]
+                # "scaler__with_std": [True],
+                # "xgboost__colsample_bytree": [1],
+                # "xgboost__gamma": [0],
+                # "xgboost__learning_rate": [0.1],
+                # "xgboost__max_depth": [4],
+                # "xgboost__min_child_weight": [1],
+                # "xgboost__n_estimators": [100],
+                # "xgboost__reg_alpha": [0.1],
+                # "xgboost__reg_lambda": [0.5],
+                # "xgboost__subsample": [1]
             }
         },
         # {
@@ -180,13 +180,13 @@ def load_estimators_data(input_shape):
         {
             'estimator': ('mlp-nn', KerasRegressor(model=NeuralNetworkGenerator.generate_mlp_model(input_shape))),
             'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'mlp-nn__epochs': [50],
-                # 'mlp-nn__batch_size': [128],
-                # 'mlp-nn__model__neurons_layer_1': [32, 64, 128],
-                # 'mlp-nn__model__neurons_layer_2': [16, 32, 64],
-                # 'mlp-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
-                # 'mlp-nn__model__optimizer': ['rmsprop', 'adam'],
+                'scaler__with_std': [True, False],
+                'mlp-nn__epochs': [50],
+                'mlp-nn__batch_size': [128],
+                'mlp-nn__model__neurons_layer_1': [32, 64, 128],
+                'mlp-nn__model__neurons_layer_2': [16, 32, 64],
+                'mlp-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
+                'mlp-nn__model__optimizer': ['rmsprop', 'adam'],
 
                 # # Best results (NASA-SOH)
                 # 'scaler__with_std': [True],
@@ -198,13 +198,13 @@ def load_estimators_data(input_shape):
                 # "mlp-nn__model__optimizer": ["adam"],
 
                 # Best results (Toyota-SOH)
-                "mlp-nn__batch_size": [128],
-                "mlp-nn__epochs": [50],
-                "mlp-nn__model__activation": ["sigmoid"],
-                "mlp-nn__model__neurons_layer_1": [128],
-                "mlp-nn__model__neurons_layer_2": [16],
-                "mlp-nn__model__optimizer": ["adam"],
-                "scaler__with_std": [True]
+                # "mlp-nn__batch_size": [128],
+                # "mlp-nn__epochs": [50],
+                # "mlp-nn__model__activation": ["sigmoid"],
+                # "mlp-nn__model__neurons_layer_1": [128],
+                # "mlp-nn__model__neurons_layer_2": [16],
+                # "mlp-nn__model__optimizer": ["adam"],
+                # "scaler__with_std": [True]
             }
         },
         # {
@@ -231,14 +231,14 @@ def load_estimators_data(input_shape):
         {
             'estimator': ('cnn-nn', KerasRegressor(model=NeuralNetworkGenerator.create_cnn_model(input_shape))),
             'grid_param': {
-                # 'scaler__with_std': [True, False],
-                # 'cnn-nn__epochs': [50],
-                # 'cnn-nn__batch_size': [128],
-                # 'cnn-nn__model__filters': [32, 64, 128],
-                # 'cnn-nn__model__kernel_size': [2, 3, 5],
-                # 'cnn-nn__model__dense_units': [10, 20, 50],
-                # 'cnn-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
-                # 'cnn-nn__model__optimizer': ['rmsprop', 'adam']
+                'scaler__with_std': [True, False],
+                'cnn-nn__epochs': [50],
+                'cnn-nn__batch_size': [128],
+                'cnn-nn__model__filters': [32, 64, 128],
+                'cnn-nn__model__kernel_size': [2, 3, 5],
+                'cnn-nn__model__dense_units': [10, 20, 50],
+                'cnn-nn__model__activation': ['relu', 'tanh', 'sigmoid'],
+                'cnn-nn__model__optimizer': ['rmsprop', 'adam']
 
                 # # Best results (NASA-SOH)
                 # "scaler__with_std": [False],
@@ -251,14 +251,14 @@ def load_estimators_data(input_shape):
                 # "cnn-nn__model__optimizer": ["adam"],
 
                 # Best results (Toyota-SOH)
-                "cnn-nn__batch_size": [128],
-                "cnn-nn__epochs": [50],
-                "cnn-nn__model__activation": ["tanh"],
-                "cnn-nn__model__dense_units": [10],
-                "cnn-nn__model__filters": [64],
-                "cnn-nn__model__kernel_size": [2],
-                "cnn-nn__model__optimizer": ["adam"],
-                "scaler__with_std": [True]
+                # "cnn-nn__batch_size": [128],
+                # "cnn-nn__epochs": [50],
+                # "cnn-nn__model__activation": ["tanh"],
+                # "cnn-nn__model__dense_units": [10],
+                # "cnn-nn__model__filters": [64],
+                # "cnn-nn__model__kernel_size": [2],
+                # "cnn-nn__model__optimizer": ["adam"],
+                # "scaler__with_std": [True]
             }
         }
     ]

@@ -40,6 +40,8 @@ class SohToyotaDatasetDataProcessor(DataProcessor):
         # Split battery data filenames into training and testing sets
         train, test = train_test_split(battery_filenames, test_size=0.2, random_state=42)
 
+        train = train.sample(frac=0.3, random_state=42)
+
         # Define and fit preprocessing pipeline on training data
         preprocessing_pipeline = Pipeline([
             ('read_and_parse_files', FunctionTransformer(func=self.read_and_parse_multiple_files)),

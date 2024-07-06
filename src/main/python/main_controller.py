@@ -1,6 +1,9 @@
 import os
 from typing import Dict
 
+import numpy as np
+import pandas as pd
+
 from data_processors.data_processor import DataProcessor
 from model_trainer import ModelTrainer
 from results_processor import ResultsProcessor
@@ -17,6 +20,38 @@ PANASONIC_DATASET_DIR = "Panasonic 18650PF Data"
 TOYOTA_DATASET_DIR = "Toyota"
 NASA_RANDOMIZED_DATASET_DIR = "NASA randomized dataset"
 
+def add_gaussian_noise(train_df, target_df, sigma, exclude_columns, noise_percentage=0.3):
+    # Calculate the number of rows to be noisy based on the noise percentage
+    num_noisy_rows = int(noise_percentage * len(train_df))
+
+    # Randomly select indices for the rows to be noisy
+    noisy_indices = np.random.choice(train_df.index, size=num_noisy_rows, replace=False)
+
+    # Create a copy of the original training data to avoid modifying it directly
+    new_train_data = train_df.copy()
+
+    # Generate Gaussian noise with mean 0 and standard deviation sigma for the selected rows and numerical columns
+    noise = np.random.normal(0, sigma, size=(
+        num_noisy_rows,
+        train_df.drop(columns=exclude_columns).select_dtypes(include=[np.number]).shape[1]
+    ))
+
+    # Add the generated noise to the selected rows and numerical columns (excluding specified columns)
+    new_train_data.loc[
+        noisy_indices, train_df.select_dtypes(include=[np.number]).columns.difference(exclude_columns)] += noise
+
+    # Extract the rows with added noise
+    noisy_rows = new_train_data.loc[noisy_indices]
+
+    # Concatenate the original training data with the noisy rows and reset the index
+    augmented_train_data = pd.concat([train_df, noisy_rows]).sort_index(kind='merge').reset_index(drop=True)
+
+    # Concatenate the original target data with the target values of the noisy rows and reset the index
+    augmented_target_data = pd.concat([target_df, target_df.loc[noisy_indices]]).sort_index(kind='merge').reset_index(
+        drop=True)
+
+    # Return the augmented training and target data
+    return augmented_train_data, augmented_target_data
 
 class MainController:
     """
@@ -75,6 +110,8 @@ class MainController:
 
             # Preprocessing the data and splitting it into training and testing sets
             preprocessing_pipeline, X_train, y_train, X_test, y_test = data_processor.preprocess_data()
+
+            X_train, y_train = add_gaussian_noise(X_train, y_train, 0.01, ['index'], 0.3)
 
             # Saving the preprocessing pipeline for future use, ensuring consistency in data processing
             self.serialization_util.save_preprocessor(results_directory, preprocessing_pipeline)

@@ -3,6 +3,7 @@ from typing import Tuple
 
 import pandas as pd
 import scipy.io
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -34,6 +35,46 @@ class SohNasaDatasetDataProcessor(DataProcessor):
         :rtype: tuple
         """
         battery_filenames = self.__list_battery_files(self.data_directory)
+
+        test_filename = battery_filenames[35]
+        df = self.read_and_parse_multiple_files([test_filename])
+
+        a = df[df['type'] == 'charge'].iloc[:10]['Voltage_measured'].explode()
+        b = df[df['type'] == 'discharge'].iloc[:10]['Voltage_measured'].explode()
+
+        const = 350
+        min_repeats = min(len(a) // const, len(b) // const)
+
+        c = np.array([])
+        for i in range(min_repeats):
+            c = np.concatenate((c, a[i * const:(i + 1) * const], b[i * const:(i + 1) * const]))
+
+        plt.rcParams.update({'font.size': 15,  # Veličina fonta za tickove i labelu
+                             'axes.labelsize': 'large',  # Veličina fonta za oznake osa
+                             'axes.titlesize': 'x-large',  # Veličina fonta za naslov
+                             'legend.fontsize': 'large'})  # Veličina fonta za legendu
+
+        plt.figure(figsize=(12, 6))
+
+        trend = 'charge' if c[1] > c[0] else 'discharge'
+        start = 0
+
+        for i in range(1, len(c)):
+            if (trend == 'charge' and c[i] < c[i - 1]) or (trend == 'discharge' and c[i] > c[i - 1]):
+                end = i
+                color = 'g' if trend == 'charge' else 'r'
+                plt.plot(range(start, end), c[start:end], color + '-')
+                trend = 'discharge' if trend == 'charge' else 'charge'
+                start = i - 1
+
+        color = 'g' if trend == 'charge' else 'r'
+        plt.plot(range(start, len(c)), c[start:], color + '-')
+
+        plt.xlabel('Vrijeme u ciklusu [s]')
+        plt.ylabel('Napon [V]')
+        plt.legend(['Pražnjenje', 'Punjenje'], loc='best')
+        plt.grid(True)
+        plt.show()
 
         # Split battery data filenames into training and testing sets
         train, test = train_test_split(battery_filenames, test_size=0.2, random_state=42)
@@ -91,8 +132,8 @@ class SohNasaDatasetDataProcessor(DataProcessor):
         # Combining and cleaning data
         battery_df = battery_df.join(first_level_data) \
             .join(second_level_data)
-        battery_df = battery_df[(battery_df['type'] == 'discharge') & (battery_df['Capacity'].notna())]
-        return battery_df.drop(['cycle', 'data', 'type'], axis=1) \
+        # battery_df = battery_df[(battery_df['Capacity'].notna())]
+        return battery_df.drop(['cycle', 'data'], axis=1) \
             .dropna(axis=1, how='all') \
             .reset_index(drop=True)
 

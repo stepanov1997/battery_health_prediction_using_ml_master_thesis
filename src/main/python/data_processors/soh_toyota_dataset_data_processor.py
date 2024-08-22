@@ -7,6 +7,7 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -36,6 +37,46 @@ class SohToyotaDatasetDataProcessor(DataProcessor):
         :rtype: tuple
         """
         battery_filenames = self.__list_battery_files(self.data_directory)
+
+        test_filename = [b for b in battery_filenames if b.endswith('FastCharge_000070_CH46_structure.json')][0]
+        df = self.read_and_parse_multiple_files([test_filename])
+
+        a = df['charge_capacity']
+        b = df['discharge_capacity']
+
+        const = 100
+        min_repeats = min(len(a) // const, len(b) // const)
+
+        c = np.array([])
+        for i in range(min_repeats):
+            c = np.concatenate((c, a[i * const:(i + 1) * const], b[i * const:(i + 1) * const]))
+
+        plt.rcParams.update({'font.size': 15,  # Veličina fonta za tickove i labelu
+                             'axes.labelsize': 'large',  # Veličina fonta za oznake osa
+                             'axes.titlesize': 'x-large',  # Veličina fonta za naslov
+                             'legend.fontsize': 'large'})  # Veličina fonta za legendu
+
+        plt.figure(figsize=(12, 6))
+
+        trend = 'charge' if c[1] > c[0] else 'discharge'
+        start = 0
+
+        for i in range(1, len(c)):
+            if (trend == 'charge' and c[i] < c[i - 1]) or (trend == 'discharge' and c[i] > c[i - 1]):
+                end = i
+                color = 'g' if trend == 'charge' else 'r'
+                plt.plot(range(start, end), c[start:end], color + '-')
+                trend = 'discharge' if trend == 'charge' else 'charge'
+                start = i - 1
+
+        color = 'g' if trend == 'charge' else 'r'
+        plt.plot(range(start, len(c)), c[start:], color + '-')
+
+        plt.xlabel('Vrijeme u ciklusu [s]')
+        plt.ylabel('Kapacitet [Ah]')
+        plt.legend(['Punjenje','Pražnjenje'], loc='upper right')
+        plt.grid(True)
+        plt.show()
 
         # Split battery data filenames into training and testing sets
         train, test = train_test_split(battery_filenames, test_size=0.2, random_state=42)
@@ -85,29 +126,36 @@ class SohToyotaDatasetDataProcessor(DataProcessor):
         # Parses individual battery data file into a structured DataFrame
         filename, data = SohToyotaDatasetDataProcessor.__read_battery_data(file)
 
-        battery_data = data['summary']
-        battery_data_final = {
-            'battery_filename': filename
-        }
-        for index in battery_data.index.values:
-            battery_data_final[index] = battery_data_final.get(index, {})
-            index_data = battery_data.loc[index]
-            for cycle_index in battery_data['cycle_index']:
-                battery_data_final[index][cycle_index] = index_data[cycle_index] \
-                    if isinstance(index_data, list) \
-                    else index_data
+        battery_data2 = data['summary']
+        return pd.DataFrame({
+            'charge_capacity': battery_data2['charge_capacity'],
+            'discharge_capacity': battery_data2['discharge_capacity'],
+            'temperature_average': battery_data2['temperature_average'],
+        })
 
-        battery_data_final = pd.DataFrame(battery_data_final)
-
-        battery_data_final['timestamp'] = battery_data_final['date_time_iso'].apply(
-            lambda x: datetime.fromisoformat(x).timestamp()
-        )
-
-        battery_data_final = battery_data_final.drop('cycle_index', axis=1) \
-            .drop('date_time_iso', axis=1) \
-            .dropna(axis=1, how='all')
-
-        return battery_data_final
+        # battery_data = data['summary']
+        # battery_data_final = {
+        #     'battery_filename': filename
+        # }
+        # for index in battery_data.index.values:
+        #     battery_data_final[index] = battery_data_final.get(index, {})
+        #     index_data = battery_data.loc[index]
+        #     for cycle_index in battery_data['cycle_index']:
+        #         battery_data_final[index][cycle_index] = index_data[cycle_index] \
+        #             if isinstance(index_data, list) \
+        #             else index_data
+        #
+        # battery_data_final = pd.DataFrame(battery_data_final)
+        #
+        # battery_data_final['timestamp'] = battery_data_final['date_time_iso'].apply(
+        #     lambda x: datetime.fromisoformat(x).timestamp()
+        # )
+        #
+        # battery_data_final = battery_data_final.drop('cycle_index', axis=1) \
+        #     .drop('date_time_iso', axis=1) \
+        #     .dropna(axis=1, how='all')
+        #
+        # return battery_data_final
 
     @staticmethod
     def read_and_parse_multiple_files(files):

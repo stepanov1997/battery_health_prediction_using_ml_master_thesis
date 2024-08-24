@@ -205,10 +205,6 @@ class RulToyotaDatasetDataProcessor(DataProcessor):
         X = df.drop(columns=['RUL'])
         y = df['RUL']
 
-
-        label_encoder = LabelEncoder()
-        y = label_encoder.fit_transform(y)
-
         return X, y
 
 

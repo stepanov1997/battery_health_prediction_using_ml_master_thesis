@@ -1,9 +1,8 @@
 import os
 
-from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from catboost import CatBoostRegressor, CatBoost, CatBoostClassifier
+from catboost import CatBoostRegressor, CatBoost
 from xgboost import XGBRegressor
 import xgboost as xgb
 from sklearn.svm import SVR
@@ -94,18 +93,29 @@ def load_estimators_data(input_shape):
         #     }
         # },
         {
-            'estimator': ('catboost', CatBoostClassifier()),
+            'estimator': ('catboost', CatBoost()),
             'grid_param': {
-                'scaler__with_std': [True, False],
-                'catboost__depth': [4, 5, 6],
-                'catboost__learning_rate': [0.01, 0.1, 0.2],
-                'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
-                'catboost__min_child_samples': [100, 200, 300],
-                'catboost__subsample': [0.5, 0.75, 1],
-                'catboost__colsample_bylevel': [0.5, 0.75, 1],
-                'catboost__loss_function': ["Logloss", "MultiClass", "Accuracy"],
-                'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
-                'catboost__eval_metric': ["Logloss", "MultiClass", "Accuracy", "AUC"]
+                # 'scaler__with_std': [True, False],
+                # 'catboost__depth': [4, 5, 6],
+                # 'catboost__learning_rate': [0.01, 0.1, 0.2],
+                # 'catboost__l2_leaf_reg': [0.1, 0.2, 0.3],
+                # 'catboost__min_child_samples': [100, 200, 300],
+                # 'catboost__subsample': [0.5, 0.75, 1],
+                # 'catboost__colsample_bylevel': [0.5, 0.75, 1],
+                # 'catboost__loss_function': ["RMSE", "MAE", "Quantile:alpha=0.5"],
+                # 'catboost__bootstrap_type': ["Bayesian", "Bernoulli", "MVS"],
+                # 'catboost__eval_metric': ["RMSE", "MAE", "R2"]
+
+                'scaler__with_std': [True],
+                'catboost__depth': [4],
+                'catboost__learning_rate': [0.01],
+                'catboost__l2_leaf_reg': [0.1],
+                'catboost__min_child_samples': [100],
+                'catboost__subsample': [0.5],
+                'catboost__colsample_bylevel': [0.75],
+                'catboost__loss_function': ["MultiClass"],
+                'catboost__bootstrap_type': ["MVS"],
+                'catboost__eval_metric': ["MultiClass"]
 
                 # # Best results (NASA-SOH)
                 # "scaler__with_std": [False],
@@ -174,12 +184,12 @@ def load_estimators_data(input_shape):
         # {
         #     'estimator': ('svm', SVC()),
         #     'grid_param': {
-        #         'scaler__with_std': [False],
-        #         'svm__C': [10.0],
-        #         'svm__kernel': ['rbf'],
-        #         'svm__gamma': ['scale'],
-        #         'svm__degree': [1],
-        #         'svm__coef0': [0.1]
+        #         'scaler__with_std': [True, False],
+        #         'svm__C': [0.1, 1.0, 10.0],
+        #         'svm__kernel': ['linear', 'poly'],
+        #         'svm__gamma': ['scale', 'auto', 0.1, 1, 10],
+        #         'svm__degree': [1, 3, 5],
+        #         'svm__coef0': [0.0, 0.1, 0.5]
         #
         #         # Best results
         #         # 'scaler__with_std': [False],
@@ -247,7 +257,7 @@ def load_estimators_data(input_shape):
         #         # "scaler__with_std": [True]
         #     }
         # },
-        # # Transfer learning (CNN)
+        # Transfer learning (CNN)
         # {
         #     'estimator': ('cnn-class-nn', KerasClassifier(model=NeuralNetworkGenerator.create_cnn_classification_model(
         #         input_shape,  5

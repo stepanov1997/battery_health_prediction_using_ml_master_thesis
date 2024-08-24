@@ -1,12 +1,13 @@
 import time
 
+import matplotlib.pyplot as plt
 from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.model_selection import GridSearchCV, GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, precision_score, recall_score, \
     accuracy_score, roc_auc_score, multilabel_confusion_matrix, classification_report, mean_squared_log_error, \
-    mean_absolute_error
+    mean_absolute_error, confusion_matrix, ConfusionMatrixDisplay
 import numpy as np
 
 
@@ -95,7 +96,15 @@ class ModelTrainer:
         y_pred = grid_search.predict(X_test)
 
         if classification_or_regression == 'classification':
-            accuracy = accuracy_score(y_test, y_pred)
+            classes = ['expired', 'short_lifespan', 'medium_lifespan', 'long_lifespan', 'very_long_lifespan']
+            final_predictions = np.argmax(y_pred, axis=1)
+            final_predictions = [classes[i] for i in final_predictions]
+            accuracy = accuracy_score(y_test, final_predictions)
+            cm = confusion_matrix(y_test, final_predictions, labels=classes)
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                          display_labels=classes)
+            disp.plot()
+            plt.show()
             f1 = f1_score(y_test, y_pred, average='macro')
             precision = precision_score(y_test, y_pred, average='macro')
             recall = recall_score(y_test, y_pred, average='macro')
@@ -104,10 +113,11 @@ class ModelTrainer:
                 roc_auc = roc_auc_score(y_test, y_pred, average='macro', multi_class='ovo')
             except ValueError as ex:
                 print(str(ex))
+
             conf_matrix = multilabel_confusion_matrix(y_test, y_pred)
             conf_matrix_dict = {
                 elem: conf_matrix[index].tolist() for index, elem in
-                enumerate(['expired', 'short_lifespan', 'medium_lifespan', 'long_lifespan', 'very_long_lifespan'])
+                enumerate(classes)
             }
             return accuracy, f1, precision, recall, roc_auc, conf_matrix_dict
         elif classification_or_regression == 'regression':

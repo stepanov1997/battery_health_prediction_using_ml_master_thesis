@@ -1,12 +1,13 @@
 import time
 
+from matplotlib import pyplot as plt
 from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.model_selection import GridSearchCV, GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score, precision_score, recall_score, \
     accuracy_score, roc_auc_score, multilabel_confusion_matrix, classification_report, mean_squared_log_error, \
-    mean_absolute_error
+    mean_absolute_error, confusion_matrix, ConfusionMatrixDisplay
 import numpy as np
 
 
@@ -95,7 +96,13 @@ class ModelTrainer:
         y_pred = grid_search.predict(X_test)
 
         if classification_or_regression == 'classification':
+            classes = ['expired', 'short_lifespan', 'medium_lifespan', 'long_lifespan', 'very_long_lifespan']
             accuracy = accuracy_score(y_test, y_pred)
+            cm = confusion_matrix(y_test.idxmax(axis=1), [y_test.columns[i] for i in np.argmax(y_pred, axis=1)])
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                          display_labels=classes)
+            disp.plot()
+            plt.show()
             f1 = f1_score(y_test, y_pred, average='macro')
             precision = precision_score(y_test, y_pred, average='macro')
             recall = recall_score(y_test, y_pred, average='macro')

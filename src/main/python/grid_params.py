@@ -222,42 +222,42 @@ def load_estimators_data(input_shape):
         #     }
         # },
         # Transfer learning (MLP)
-        {
-            'estimator': ('mlp-tl-nn', KerasClassifier(model=NeuralNetworkGenerator.generate_transfer_learning_model(
-                5, MLP_TRANSFER_LEARNING_MODEL_PATH
-            ))),
-            'grid_param': {
-                'scaler__with_std': [True, False],
-                'mlp-tl-nn__epochs': [50, 100],
-                'mlp-tl-nn__batch_size': [128],
-                'mlp-tl-nn__model__neurons_layer_3': [10, 20, 30],
-                'mlp-tl-nn__model__activation': ['softmax'],
-                'mlp-tl-nn__model__loss': ['categorical_crossentropy'],
-                'mlp-tl-nn__model__optimizer': ['rmsprop', 'adam'],
-
-                # Best results (Toyota-RUL)
-                # "mlp-tl-nn__batch_size": [128],
-                # "mlp-tl-nn__epochs": [50],
-                # "mlp-tl-nn__model__activation": ["softmax"],
-                # "mlp-tl-nn__model__loss": ['categorical_crossentropy'],
-                # "mlp-tl-nn__model__neurons_layer_3": [10],
-                # "mlp-tl-nn__model__optimizer": ["rmsprop"],
-                # "scaler__with_std": [True]
-            }
-        },
+        # {
+        #     'estimator': ('mlp-tl-nn', KerasClassifier(model=NeuralNetworkGenerator.generate_transfer_learning_model(
+        #         5, MLP_TRANSFER_LEARNING_MODEL_PATH
+        #     ))),
+        #     'grid_param': {
+        #         'scaler__with_std': [True, False],
+        #         'mlp-tl-nn__epochs': [50, 100],
+        #         'mlp-tl-nn__batch_size': [128],
+        #         'mlp-tl-nn__model__neurons_layer_3': [10, 20, 30],
+        #         'mlp-tl-nn__model__activation': ['softmax'],
+        #         'mlp-tl-nn__model__loss': ['categorical_crossentropy'],
+        #         'mlp-tl-nn__model__optimizer': ['rmsprop', 'adam'],
+        #
+        #         # Best results (Toyota-RUL)
+        #         # "mlp-tl-nn__batch_size": [128],
+        #         # "mlp-tl-nn__epochs": [50],
+        #         # "mlp-tl-nn__model__activation": ["softmax"],
+        #         # "mlp-tl-nn__model__loss": ['categorical_crossentropy'],
+        #         # "mlp-tl-nn__model__neurons_layer_3": [10],
+        #         # "mlp-tl-nn__model__optimizer": ["rmsprop"],
+        #         # "scaler__with_std": [True]
+        #     }
+        # },
         # Transfer learning (CNN)
         {
             'estimator': ('cnn-tl-nn', KerasClassifier(model=NeuralNetworkGenerator.generate_transfer_learning_model(
                 5, CNN_TRANSFER_LEARNING_MODEL_PATH
             ))),
             'grid_param': {
-                'scaler__with_std': [True, False],
-                'cnn-tl-nn__epochs': [50, 100],
+                'scaler__with_std': [True],
+                'cnn-tl-nn__epochs': [50],
                 'cnn-tl-nn__batch_size': [128],
-                'cnn-tl-nn__model__neurons_layer_3': [10, 20, 30],
+                'cnn-tl-nn__model__neurons_layer_3': [10],
                 'cnn-tl-nn__model__activation': ['softmax'],
                 'cnn-tl-nn__model__loss': ['categorical_crossentropy'],
-                'cnn-tl-nn__model__optimizer': ['rmsprop', 'adam']
+                'cnn-tl-nn__model__optimizer': ['rmsprop']
 
                 # Best results (Toyota-RUL)
                 # "cnn-tl-nn__batch_size": [128],
